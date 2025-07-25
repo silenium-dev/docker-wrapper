@@ -3,12 +3,22 @@ package main
 import (
 	"context"
 	"docker-wrapper/pkg/client"
+	"docker-wrapper/pkg/client/auth"
 	"github.com/distribution/reference"
 	client2 "github.com/docker/docker/client"
+	"time"
 )
 
 func main() {
-	cli, err := client.New(client2.FromEnv)
+	authProvider, err := auth.NewDefaultProvider()
+	if err != nil {
+		panic(err)
+	}
+	cli, err := client.NewWithOpts(
+		client.WithAuthProvider(authProvider),
+		client.FromEnv,
+		client.WithDockerOpts(client2.WithTimeout(time.Second*10)),
+	)
 	if err != nil {
 		panic(err)
 	}
