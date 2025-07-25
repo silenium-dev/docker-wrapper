@@ -1,9 +1,9 @@
 package events
 
 import (
-	"docker-wrapper/pkg/client/pull/base"
 	"fmt"
 	"github.com/opencontainers/go-digest"
+	"github.com/silenium-dev/docker-wrapper/pkg/client/pull/base"
 	"strings"
 	"time"
 )

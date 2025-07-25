@@ -3,9 +3,9 @@ package pull
 import (
 	"bufio"
 	"context"
-	"docker-wrapper/pkg/client/pull/base"
-	"docker-wrapper/pkg/client/pull/events"
 	"encoding/json"
+	"github.com/silenium-dev/docker-wrapper/pkg/client/pull/base"
+	"github.com/silenium-dev/docker-wrapper/pkg/client/pull/events"
 	"io"
 	"log"
 )

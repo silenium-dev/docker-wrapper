@@ -2,10 +2,10 @@ package main
 
 import (
 	"context"
-	"docker-wrapper/pkg/client"
-	"docker-wrapper/pkg/client/auth"
 	"github.com/distribution/reference"
 	client2 "github.com/docker/docker/client"
+	"github.com/silenium-dev/docker-wrapper/pkg/client"
+	"github.com/silenium-dev/docker-wrapper/pkg/client/auth"
 	"time"
 )
 

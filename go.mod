@@ -1,9 +1,10 @@
-module docker-wrapper
+module github.com/silenium-dev/docker-wrapper
 
 go 1.24
 
 require (
 	github.com/containerd/errdefs v1.0.0
+	github.com/cpuguy83/dockercfg v0.3.2
 	github.com/distribution/reference v0.6.0
 	github.com/docker/docker v25.0.10+incompatible
 	github.com/docker/go-units v0.5.0
@@ -13,7 +14,6 @@ require (
 require (
 	github.com/Microsoft/go-winio v0.6.2 // indirect
 	github.com/containerd/log v0.1.0 // indirect
-	github.com/cpuguy83/dockercfg v0.3.2 // indirect
 	github.com/docker/go-connections v0.5.0 // indirect
 	github.com/felixge/httpsnoop v1.0.4 // indirect
 	github.com/go-logr/logr v1.4.3 // indirect

@@ -2,11 +2,11 @@ package client
 
 import (
 	"context"
-	"docker-wrapper/pkg/client/pull"
-	"docker-wrapper/pkg/client/pull/events"
 	"github.com/distribution/reference"
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/registry"
+	"github.com/silenium-dev/docker-wrapper/pkg/client/pull"
+	"github.com/silenium-dev/docker-wrapper/pkg/client/pull/events"
 )
 
 func (c *Client) Pull(ctx context.Context, ref reference.Named) (chan events.PullEvent, error) {
