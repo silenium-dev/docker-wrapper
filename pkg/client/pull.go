@@ -24,6 +24,7 @@ func (c *Client) PullWithEvents(ctx context.Context, ref reference.Named) (chan 
 	var encodedAuth string
 	var err error
 	if c.authProvider != nil {
+		c.logger.Debugf("using configured auth provider")
 		encodedAuth, err = registry.EncodeAuthConfig(c.authProvider.AuthConfig(ref))
 		if err != nil {
 			return nil, err
@@ -44,8 +45,9 @@ func (c *Client) Pull(ctx context.Context, ref reference.Named) (digest.Digest, 
 
 	var digestEvent *events.Digest
 	for event := range eventChan {
-		if _, ok := event.(*events.Digest); digestEvent == nil && ok {
-			digestEvent = event.(*events.Digest)
+		if ev, ok := event.(*events.Digest); digestEvent == nil && ok {
+			c.logger.Debugf("received digest event: %s", ev.String())
+			digestEvent = ev
 		}
 	}
 	if digestEvent == nil {

@@ -1,20 +1,17 @@
 package client
 
 import (
-	"github.com/distribution/reference"
-	"github.com/docker/docker/api/types/registry"
 	"github.com/docker/docker/client"
+	"github.com/silenium-dev/docker-wrapper/pkg/client/auth"
+	"go.uber.org/zap"
 	"slices"
 )
-
-type AuthProvider interface {
-	AuthConfig(named reference.Named) registry.AuthConfig
-}
 
 type Client struct {
 	*client.Client
 	dockerOpts   []client.Opt
-	authProvider AuthProvider
+	authProvider auth.Provider
+	logger       *zap.SugaredLogger
 }
 
 type Opt func(*Client) error
@@ -27,6 +24,11 @@ func NewWithOpts(opts ...Opt) (*Client, error) {
 			return nil, err
 		}
 	}
+
+	if c.logger == nil {
+		c.logger = zap.Must(zap.NewDevelopment()).Sugar()
+	}
+
 	cli, err := client.NewClientWithOpts(c.dockerOpts...)
 	if err != nil {
 		return nil, err
@@ -39,9 +41,23 @@ func (c *Client) Close() error {
 	return c.Client.Close()
 }
 
-func WithAuthProvider(authProvider AuthProvider) Opt {
+func WithAuthProvider(authProvider auth.Provider) Opt {
 	return func(c *Client) error {
 		c.authProvider = authProvider
+		return nil
+	}
+}
+
+func WithSugaredLogger(logger *zap.SugaredLogger) Opt {
+	return func(c *Client) error {
+		c.logger = logger
+		return nil
+	}
+}
+
+func WithLogger(logger *zap.Logger) Opt {
+	return func(c *Client) error {
+		c.logger = logger.Sugar()
 		return nil
 	}
 }

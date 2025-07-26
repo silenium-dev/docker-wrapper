@@ -7,34 +7,35 @@ import (
 	"github.com/cpuguy83/dockercfg"
 	"github.com/distribution/reference"
 	"github.com/docker/docker/api/types/registry"
-	"log"
 	"os"
 )
 
 type DefaultAuthProvider struct {
 	authConfigs map[string]*registry.AuthConfig
+	config      *ProviderConfig
 }
 
 func (d *DefaultAuthProvider) AuthConfig(ref reference.Named) registry.AuthConfig {
 	domain := reference.Domain(ref)
 	if ac, ok := d.authConfigs[domain]; ok {
-		log.Printf("using auth config for %s", domain)
+		d.config.Logger.Debugf("using auth config for %s", domain)
 		return *ac
 	}
-	log.Printf("no auth config for %s", domain)
+	d.config.Logger.Debugf("no auth config for %s", domain)
 	return registry.AuthConfig{}
 }
 
-func NewDefaultProvider() (*DefaultAuthProvider, error) {
+func NewDefaultProvider(opts ...Opt) (*DefaultAuthProvider, error) {
+	config := renderConfig(opts)
+
 	authConfigs := map[string]*registry.AuthConfig{}
 
 	cfg, err := dockercfg.LoadDefaultConfig()
 	if err != nil && !errors.Is(err, os.ErrNotExist) {
-		log.Printf("failed to load docker config: %v", err)
+		config.Logger.Errorf("failed to load docker config: %v", err)
 		return nil, err
 	} else if errors.Is(err, os.ErrNotExist) {
-		log.Printf("docker config not found, using empty config")
-		return &DefaultAuthProvider{authConfigs}, nil
+		return &DefaultAuthProvider{authConfigs, config}, nil
 	}
 
 	for k, v := range cfg.AuthConfigs {
@@ -50,7 +51,7 @@ func NewDefaultProvider() (*DefaultAuthProvider, error) {
 		if ac.Username == "" && ac.Password == "" {
 			err := getCredentials(k, &cfg, ac)
 			if err != nil {
-				log.Printf("failed to get credentials for registry %s: %v", k, err)
+				config.Logger.Errorf("failed to get credentials for registry %s: %v", k, err)
 				continue
 			}
 		}
@@ -63,10 +64,10 @@ func NewDefaultProvider() (*DefaultAuthProvider, error) {
 	for k := range cfg.CredentialHelpers {
 		err := getCredentials(k, &cfg, authConfigs[k])
 		if err != nil {
-			log.Printf("failed to get credentials for registry %s: %v", k, err)
+			config.Logger.Errorf("failed to get credentials for registry %s: %v", k, err)
 		}
 	}
-	return &DefaultAuthProvider{authConfigs}, nil
+	return &DefaultAuthProvider{authConfigs, config}, nil
 }
 
 func getCredentials(registryHost string, cfg *dockercfg.Config, ac *registry.AuthConfig) error {
