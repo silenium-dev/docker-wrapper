@@ -1,6 +1,8 @@
 package events
 
-import "fmt"
+import (
+	"fmt"
+)
 
 type DownloadedNewerImage struct {
 	Final
