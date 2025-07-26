@@ -13,6 +13,7 @@ type PullEvent interface {
 }
 
 type LayerEvent interface {
+	PullEvent
 	LayerId() string
 }
 
@@ -47,6 +48,7 @@ func Parse(event base.PullProgressEvent) (PullEvent, error) {
 		Hide:    event.ProgressDetail.HideCounts,
 	}
 	progressBase := ProgressBase{layer, progress}
+	errorEvent := PullError{Error: event.Error}
 
 	switch event.Status {
 	case AlreadyExistsStatus:
@@ -76,6 +78,11 @@ func Parse(event base.PullProgressEvent) (PullEvent, error) {
 	case PullCompleteStatus:
 		return &PullComplete{layer}, nil
 	default:
+		if event.Error != "" && event.ID != "" {
+			return &LayerError{layer, errorEvent}, nil
+		} else if event.Error != "" {
+			return &errorEvent, nil
+		}
 		if strings.HasPrefix(event.Status, "Pulling from") {
 			return &PullStarted{}, nil
 		}

@@ -2,19 +2,21 @@ package state
 
 import (
 	"github.com/distribution/reference"
-	"github.com/opencontainers/go-digest"
+	"github.com/silenium-dev/docker-wrapper/pkg/client/pull/events"
 )
 
 type Pull interface {
 	Ref() reference.Named
-	Digest() *digest.Digest // can be nil when the pull is not yet complete
 	Layers() []Layer
 	Layer(id string) Layer
+	Next(event events.PullEvent) (Pull, error)
+	Status() string
 }
 
 type Layer interface {
 	Id() string
 	Status() string
+	Next(event events.LayerEvent) (Layer, error)
 }
 
 type pullBase struct {
@@ -24,10 +26,6 @@ type pullBase struct {
 
 func (p *pullBase) Ref() reference.Named {
 	return p.ref
-}
-
-func (p *pullBase) Digest() *digest.Digest {
-	return nil
 }
 
 func (p *pullBase) Layers() []Layer {
