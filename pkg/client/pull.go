@@ -12,15 +12,7 @@ import (
 	"github.com/silenium-dev/docker-wrapper/pkg/client/pull/state"
 )
 
-func (c *Client) PullWithState(ctx context.Context, ref reference.Named) (chan state.Pull, error) {
-	eventChan, err := c.PullWithEvents(ctx, ref)
-	if err != nil {
-		return nil, err
-	}
-	return pull.StateFromStream(ctx, ref, eventChan), nil
-}
-
-func (c *Client) PullWithEvents(ctx context.Context, ref reference.Named) (chan events.PullEvent, error) {
+func (c *Client) ImagePullWithEvents(ctx context.Context, ref reference.Named) (chan events.PullEvent, error) {
 	var encodedAuth string
 	var err error
 	if c.authProvider != nil {
@@ -37,8 +29,16 @@ func (c *Client) PullWithEvents(ctx context.Context, ref reference.Named) (chan 
 	return pull.ParseStream(ctx, reader), nil
 }
 
-func (c *Client) Pull(ctx context.Context, ref reference.Named) (digest.Digest, error) {
-	eventChan, err := c.PullWithEvents(ctx, ref)
+func (c *Client) ImagePullWithState(ctx context.Context, ref reference.Named) (chan state.Pull, error) {
+	eventChan, err := c.ImagePullWithEvents(ctx, ref)
+	if err != nil {
+		return nil, err
+	}
+	return pull.StateFromStream(ctx, ref, eventChan), nil
+}
+
+func (c *Client) ImagePull(ctx context.Context, ref reference.Named) (digest.Digest, error) {
+	eventChan, err := c.ImagePullWithEvents(ctx, ref)
 	if err != nil {
 		return "", err
 	}
