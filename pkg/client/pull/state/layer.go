@@ -202,7 +202,7 @@ func (l *LayerAlreadyExists) Status() string {
 }
 
 func (l *LayerAlreadyExists) Next(event events.LayerEvent) (Layer, error) {
-	return nil, fmt.Errorf("already completed, tried %T", event)
+	return nil, fmt.Errorf("already completed, tried %T on layer-already-exists", event)
 }
 
 type LayerPullComplete struct {
@@ -214,5 +214,5 @@ func (l *LayerPullComplete) Status() string {
 }
 
 func (l *LayerPullComplete) Next(event events.LayerEvent) (Layer, error) {
-	return nil, fmt.Errorf("already completed, tried %T", event)
+	return nil, fmt.Errorf("already completed, tried %T on layer-pull-complete", event)
 }
