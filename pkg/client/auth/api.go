@@ -8,6 +8,7 @@ import (
 
 type Provider interface {
 	AuthConfig(ref reference.Named) registry.AuthConfig
+	AuthConfigs() map[string]registry.AuthConfig
 }
 
 type ProviderConfig struct {

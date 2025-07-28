@@ -25,6 +25,12 @@ func (o *OverridingAuthProvider) WithOverride(domain string, ac registry.AuthCon
 	return NewOverridingProvider(o.source, overrides)
 }
 
+func (o *OverridingAuthProvider) AuthConfigs() map[string]registry.AuthConfig {
+	authConfigs := o.source.AuthConfigs()
+	maps.Copy(authConfigs, o.overrides)
+	return authConfigs
+}
+
 func (o *OverridingAuthProvider) AuthConfig(ref reference.Named) registry.AuthConfig {
 	if ac, ok := o.overrides[reference.Domain(ref)]; ok {
 		o.config.Logger.Debugf("using override for %s", reference.Domain(ref))

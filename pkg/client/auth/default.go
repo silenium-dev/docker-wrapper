@@ -11,15 +11,19 @@ import (
 )
 
 type DefaultAuthProvider struct {
-	authConfigs map[string]*registry.AuthConfig
+	authConfigs map[string]registry.AuthConfig
 	config      *ProviderConfig
+}
+
+func (d *DefaultAuthProvider) AuthConfigs() map[string]registry.AuthConfig {
+	return d.authConfigs
 }
 
 func (d *DefaultAuthProvider) AuthConfig(ref reference.Named) registry.AuthConfig {
 	domain := reference.Domain(ref)
 	if ac, ok := d.authConfigs[domain]; ok {
 		d.config.Logger.Debugf("using auth config for %s", domain)
-		return *ac
+		return ac
 	}
 	d.config.Logger.Debugf("no auth config for %s", domain)
 	return registry.AuthConfig{}
@@ -28,7 +32,7 @@ func (d *DefaultAuthProvider) AuthConfig(ref reference.Named) registry.AuthConfi
 func NewDefaultProvider(opts ...Opt) (*DefaultAuthProvider, error) {
 	config := renderConfig(opts)
 
-	authConfigs := map[string]*registry.AuthConfig{}
+	authConfigs := map[string]registry.AuthConfig{}
 
 	cfg, err := dockercfg.LoadDefaultConfig()
 	if err != nil && !errors.Is(err, os.ErrNotExist) {
@@ -39,7 +43,7 @@ func NewDefaultProvider(opts ...Opt) (*DefaultAuthProvider, error) {
 	}
 
 	for k, v := range cfg.AuthConfigs {
-		ac := &registry.AuthConfig{
+		ac := registry.AuthConfig{
 			Username:      v.Username,
 			Password:      v.Password,
 			Email:         v.Email,
@@ -49,7 +53,7 @@ func NewDefaultProvider(opts ...Opt) (*DefaultAuthProvider, error) {
 			ServerAddress: v.ServerAddress,
 		}
 		if ac.Username == "" && ac.Password == "" {
-			err := getCredentials(k, &cfg, ac)
+			err := getCredentials(k, &cfg, &ac)
 			if err != nil {
 				config.Logger.Errorf("failed to get credentials for registry %s: %v", k, err)
 				continue
@@ -62,10 +66,12 @@ func NewDefaultProvider(opts ...Opt) (*DefaultAuthProvider, error) {
 	}
 
 	for k := range cfg.CredentialHelpers {
-		err := getCredentials(k, &cfg, authConfigs[k])
+		ac := authConfigs[k]
+		err := getCredentials(k, &cfg, &ac)
 		if err != nil {
 			config.Logger.Errorf("failed to get credentials for registry %s: %v", k, err)
 		}
+		authConfigs[k] = ac
 	}
 	return &DefaultAuthProvider{authConfigs, config}, nil
 }
