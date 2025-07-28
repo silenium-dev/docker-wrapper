@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"github.com/containerd/platforms"
 	"github.com/distribution/reference"
-	"github.com/docker/docker/api/types"
+	"github.com/docker/docker/api/types/image"
 	"github.com/docker/docker/api/types/registry"
 	"github.com/google/go-containerregistry/pkg/name"
 	"github.com/google/go-containerregistry/pkg/v1"
@@ -17,7 +17,7 @@ import (
 	"github.com/silenium-dev/docker-wrapper/pkg/client/pull/state"
 )
 
-func (c *Client) ImagePullWithEvents(ctx context.Context, ref reference.Named, options types.ImagePullOptions) (chan events.PullEvent, error) {
+func (c *Client) ImagePullWithEvents(ctx context.Context, ref reference.Named, options image.PullOptions) (chan events.PullEvent, error) {
 	var encodedAuth string
 	var err error
 	if c.authProvider != nil {
@@ -35,7 +35,7 @@ func (c *Client) ImagePullWithEvents(ctx context.Context, ref reference.Named, o
 	return pull.ParseStream(ctx, reader), nil
 }
 
-func (c *Client) ImagePullWithState(ctx context.Context, ref reference.Named, options types.ImagePullOptions) (chan state.Pull, error) {
+func (c *Client) ImagePullWithState(ctx context.Context, ref reference.Named, options image.PullOptions) (chan state.Pull, error) {
 	var platform *v1.Platform
 	var err error
 	if options.Platform != "" {
@@ -55,7 +55,7 @@ func (c *Client) ImagePullWithState(ctx context.Context, ref reference.Named, op
 	return pull.StateFromStream(ctx, ref, eventChan, manifest), nil
 }
 
-func (c *Client) ImagePull(ctx context.Context, ref reference.Named, options types.ImagePullOptions) (digest.Digest, error) {
+func (c *Client) ImagePull(ctx context.Context, ref reference.Named, options image.PullOptions) (digest.Digest, error) {
 	eventChan, err := c.ImagePullWithEvents(ctx, ref, options)
 	if err != nil {
 		return "", err

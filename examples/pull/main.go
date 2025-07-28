@@ -3,7 +3,7 @@ package main
 import (
 	"context"
 	"github.com/distribution/reference"
-	"github.com/docker/docker/api/types"
+	"github.com/docker/docker/api/types/image"
 	"github.com/docker/docker/api/types/registry"
 	client2 "github.com/docker/docker/client"
 	"github.com/silenium-dev/docker-wrapper/pkg/client"
@@ -36,7 +36,7 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	stateChan, err := cli.ImagePullWithState(context.Background(), ref, types.ImagePullOptions{})
+	stateChan, err := cli.ImagePullWithState(context.Background(), ref, image.PullOptions{})
 	if err != nil {
 		panic(err)
 	}
@@ -47,7 +47,7 @@ func main() {
 			logger.Infof("%02d [%s]: %s", idx, l.Id(), l.Status())
 		}
 	}
-	digest, err := cli.ImagePull(context.Background(), ref, types.ImagePullOptions{})
+	digest, err := cli.ImagePull(context.Background(), ref, image.PullOptions{})
 	if err != nil {
 		panic(err)
 	}
