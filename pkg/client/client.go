@@ -4,11 +4,13 @@ import (
 	"github.com/docker/docker/client"
 	"github.com/silenium-dev/docker-wrapper/pkg/client/auth"
 	"go.uber.org/zap"
+	"net/http"
 	"slices"
 )
 
 type Client struct {
 	*client.Client
+	httpClient   *http.Client
 	dockerOpts   []client.Opt
 	authProvider auth.Provider
 	logger       *zap.SugaredLogger
@@ -27,6 +29,9 @@ func NewWithOpts(opts ...Opt) (*Client, error) {
 
 	if c.logger == nil {
 		c.logger = zap.Must(zap.NewDevelopment()).Sugar()
+	}
+	if c.httpClient == nil {
+		c.httpClient = http.DefaultClient
 	}
 
 	cli, err := client.NewClientWithOpts(c.dockerOpts...)
@@ -65,6 +70,13 @@ func WithLogger(logger *zap.Logger) Opt {
 func WithDockerOpts(opts ...client.Opt) Opt {
 	return func(c *Client) error {
 		c.dockerOpts = slices.Concat(c.dockerOpts, opts)
+		return nil
+	}
+}
+
+func WithHTTPClient(httpClient *http.Client) Opt {
+	return func(c *Client) error {
+		c.httpClient = httpClient
 		return nil
 	}
 }

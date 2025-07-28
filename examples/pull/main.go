@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"github.com/distribution/reference"
+	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/registry"
 	client2 "github.com/docker/docker/client"
 	"github.com/silenium-dev/docker-wrapper/pkg/client"
@@ -30,12 +31,12 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	ref, err := reference.ParseDockerRef("quay.io/prometheus/prometheus:latest")
-	//ref, err := reference.ParseDockerRef("localstack/localstack:latest")
+	//ref, err := reference.ParseDockerRef("quay.io/prometheus/prometheus:latest")
+	ref, err := reference.ParseDockerRef("localstack/localstack:latest")
 	if err != nil {
 		panic(err)
 	}
-	stateChan, err := cli.ImagePullWithState(context.Background(), ref)
+	stateChan, err := cli.ImagePullWithState(context.Background(), ref, types.ImagePullOptions{})
 	if err != nil {
 		panic(err)
 	}
@@ -46,7 +47,7 @@ func main() {
 			logger.Infof("%02d [%s]: %s", idx, l.Id(), l.Status())
 		}
 	}
-	digest, err := cli.ImagePull(context.Background(), ref)
+	digest, err := cli.ImagePull(context.Background(), ref, types.ImagePullOptions{})
 	if err != nil {
 		panic(err)
 	}

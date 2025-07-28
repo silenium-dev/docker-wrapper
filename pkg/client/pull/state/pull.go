@@ -3,8 +3,10 @@ package state
 import (
 	"fmt"
 	"github.com/distribution/reference"
+	v1 "github.com/google/go-containerregistry/pkg/v1"
 	"github.com/opencontainers/go-digest"
 	"github.com/silenium-dev/docker-wrapper/pkg/client/pull/events"
+	"maps"
 )
 
 type PullInProgress struct {
@@ -19,12 +21,14 @@ func (p *PullInProgress) Status() string {
 	return "Finishing"
 }
 
-func NewPullState(ref reference.Named, event events.PullEvent) (Pull, error) {
+func NewPullState(ref reference.Named, manifest *v1.Manifest, event events.PullEvent) (Pull, error) {
 	switch event.(type) {
 	case *events.PullStarted:
 		return &PullInProgress{
 			pullBase: pullBase{
-				ref: ref,
+				ref:      ref,
+				manifest: manifest,
+				layers:   make(map[string]Layer),
 			},
 		}, nil
 	}
@@ -34,26 +38,21 @@ func NewPullState(ref reference.Named, event events.PullEvent) (Pull, error) {
 func (p *PullInProgress) Next(event events.PullEvent) (Pull, error) {
 	layers := p.layers
 	if le, ok := event.(events.LayerEvent); ok {
-		layers = make([]Layer, len(p.layers))
-		copy(layers, p.layers)
-		found := false
-		for i, l := range p.layers {
-			if l.Id() == le.LayerId() {
-				found = true
-				newL, err := l.Next(le)
-				if err != nil {
-					return nil, err
-				}
-				layers[i] = newL
-				break
+		layers = maps.Clone(p.layers)
+		layer, found := layers[le.LayerId()]
+		if found {
+			found = true
+			newL, err := layer.Next(le)
+			if err != nil {
+				return nil, err
 			}
-		}
-		if !found {
+			layers[layer.Id()] = newL
+		} else {
 			layer, err := NewLayer(le)
 			if err != nil {
 				return nil, err
 			}
-			layers = append(layers, layer)
+			layers[layer.Id()] = layer
 		}
 	}
 
@@ -62,8 +61,9 @@ func (p *PullInProgress) Next(event events.PullEvent) (Pull, error) {
 	case events.LayerEvent:
 		result = &PullInProgress{
 			pullBase: pullBase{
-				ref:    p.ref,
-				layers: layers,
+				ref:      p.ref,
+				layers:   layers,
+				manifest: p.manifest,
 			},
 			digest: p.digest,
 		}

@@ -7,12 +7,17 @@ import (
 	"github.com/cpuguy83/dockercfg"
 	"github.com/distribution/reference"
 	"github.com/docker/docker/api/types/registry"
+	"github.com/google/go-containerregistry/pkg/authn"
 	"os"
 )
 
 type DefaultAuthProvider struct {
 	authConfigs map[string]registry.AuthConfig
 	config      *ProviderConfig
+}
+
+func (d *DefaultAuthProvider) Resolve(resource authn.Resource) (authn.Authenticator, error) {
+	return &SimpleAuthenticator{AuthConfig: d.AuthConfigs()[resource.RegistryStr()]}, nil
 }
 
 func (d *DefaultAuthProvider) AuthConfigs() map[string]registry.AuthConfig {

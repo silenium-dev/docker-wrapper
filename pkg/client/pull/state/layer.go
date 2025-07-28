@@ -48,7 +48,7 @@ func (l *LayerPullingFSLayer) Next(event events.LayerEvent) (Layer, error) {
 	case *events.DownloadComplete:
 		return &LayerDownloadComplete{l.layerBase}, nil
 	case *events.AlreadyExists:
-		return &LayerAlreadyDownloaded{l.layerBase}, nil
+		return &LayerAlreadyExists{l.layerBase}, nil
 	case *events.LayerError:
 		return &LayerErrored{l.layerBase, event.Error}, nil
 	}
@@ -66,7 +66,7 @@ func (l *LayerWaiting) Status() string {
 func (l *LayerWaiting) Next(event events.LayerEvent) (Layer, error) {
 	switch event := event.(type) {
 	case *events.AlreadyExists:
-		return &LayerAlreadyDownloaded{l.layerBase}, nil
+		return &LayerAlreadyExists{l.layerBase}, nil
 	case *events.Downloading:
 		return &LayerDownloading{l.layerBase, event.Progress()}, nil
 	case *events.DownloadComplete:
@@ -146,28 +146,6 @@ func (l *LayerDownloadComplete) Next(event events.LayerEvent) (Layer, error) {
 	return nil, fmt.Errorf("invalid transition (download-complete + %T)", event)
 }
 
-type LayerAlreadyDownloaded struct {
-	layerBase
-}
-
-func (l *LayerAlreadyDownloaded) Status() string {
-	return "Already downloaded"
-}
-
-func (l *LayerAlreadyDownloaded) Next(event events.LayerEvent) (Layer, error) {
-	switch event := event.(type) {
-	case *events.Extracting:
-		return parseLayerExtracting(l.layerBase, event), nil
-	case *events.LayerError:
-		return &LayerErrored{layerBase{event.LayerId()}, event.Error}, nil
-	case *events.PullComplete:
-		return &LayerPullComplete{l.layerBase}, nil
-	case *events.AlreadyExists:
-		return &LayerAlreadyExists{l.layerBase}, nil
-	}
-	return nil, fmt.Errorf("invalid transition (already-downloaded + %T)", event)
-}
-
 type LayerExtracting struct {
 	layerBase
 	duration *time.Duration
@@ -226,7 +204,17 @@ func (l *LayerAlreadyExists) Status() string {
 }
 
 func (l *LayerAlreadyExists) Next(event events.LayerEvent) (Layer, error) {
-	return nil, fmt.Errorf("already completed, tried %T on layer-already-exists", event)
+	switch event := event.(type) {
+	case *events.Extracting:
+		return parseLayerExtracting(l.layerBase, event), nil
+	case *events.LayerError:
+		return &LayerErrored{layerBase{event.LayerId()}, event.Error}, nil
+	case *events.PullComplete:
+		return &LayerPullComplete{l.layerBase}, nil
+	case *events.AlreadyExists:
+		return &LayerAlreadyExists{l.layerBase}, nil
+	}
+	return nil, fmt.Errorf("invalid transition (already-exists + %T)", event)
 }
 
 type LayerPullComplete struct {

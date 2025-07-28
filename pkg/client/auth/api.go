@@ -3,10 +3,12 @@ package auth
 import (
 	"github.com/distribution/reference"
 	"github.com/docker/docker/api/types/registry"
+	"github.com/google/go-containerregistry/pkg/authn"
 	"go.uber.org/zap"
 )
 
 type Provider interface {
+	authn.Keychain
 	AuthConfig(ref reference.Named) registry.AuthConfig
 	AuthConfigs() map[string]registry.AuthConfig
 }
@@ -38,4 +40,18 @@ func renderConfig(opts []Opt) *ProviderConfig {
 		config.Logger = zap.Must(zap.NewDevelopment()).Sugar()
 	}
 	return config
+}
+
+type SimpleAuthenticator struct {
+	AuthConfig registry.AuthConfig
+}
+
+func (s *SimpleAuthenticator) Authorization() (*authn.AuthConfig, error) {
+	return &authn.AuthConfig{
+		Username:      s.AuthConfig.Username,
+		Password:      s.AuthConfig.Password,
+		Auth:          s.AuthConfig.Auth,
+		IdentityToken: s.AuthConfig.IdentityToken,
+		RegistryToken: s.AuthConfig.RegistryToken,
+	}, nil
 }

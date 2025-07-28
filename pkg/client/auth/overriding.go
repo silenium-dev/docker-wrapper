@@ -3,6 +3,7 @@ package auth
 import (
 	"github.com/distribution/reference"
 	"github.com/docker/docker/api/types/registry"
+	"github.com/google/go-containerregistry/pkg/authn"
 	"maps"
 )
 
@@ -38,4 +39,8 @@ func (o *OverridingAuthProvider) AuthConfig(ref reference.Named) registry.AuthCo
 	}
 	o.config.Logger.Debugf("no override present for %s", reference.Domain(ref))
 	return o.source.AuthConfig(ref)
+}
+
+func (o *OverridingAuthProvider) Resolve(resource authn.Resource) (authn.Authenticator, error) {
+	return &SimpleAuthenticator{AuthConfig: o.AuthConfigs()[resource.RegistryStr()]}, nil
 }
