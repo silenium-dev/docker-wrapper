@@ -25,6 +25,7 @@ func main() {
 	cli, err := client.NewWithOpts(
 		client.WithAuthProvider(override),
 		client.FromEnv,
+		client.WithVersionNegotiation,
 		client.WithDockerOpts(client2.WithTimeout(time.Hour*1)),
 		client.WithSugaredLogger(logger.With(zap.String("component", "docker-client"))),
 	)
