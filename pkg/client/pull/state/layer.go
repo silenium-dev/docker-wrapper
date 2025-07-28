@@ -141,7 +141,7 @@ func (l *LayerDownloadComplete) Next(event events.LayerEvent) (Layer, error) {
 	case *events.LayerError:
 		return &LayerErrored{layerBase{event.LayerId()}, event.Error}, nil
 	case *events.PullComplete:
-		return &LayerPullComplete{l.layerBase}
+		return &LayerPullComplete{l.layerBase}, nil
 	}
 	return nil, fmt.Errorf("invalid transition (download-complete + %T)", event)
 }
