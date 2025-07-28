@@ -45,10 +45,12 @@ func (l *LayerPullingFSLayer) Next(event events.LayerEvent) (Layer, error) {
 		return &LayerWaiting{l.layerBase}, nil
 	case *events.Downloading:
 		return &LayerDownloading{l.layerBase, event.Progress()}, nil
+	case *events.DownloadComplete:
+		return &LayerDownloadComplete{l.layerBase}, nil
 	case *events.AlreadyExists:
 		return &LayerAlreadyExists{l.layerBase}, nil
 	case *events.LayerError:
-		return &LayerErrored{layerBase{event.LayerId()}, event.Error}, nil
+		return &LayerErrored{l.layerBase, event.Error}, nil
 	}
 	return nil, fmt.Errorf("invalid transition (pulling-fs-layer + %T)", event)
 }
@@ -199,8 +201,8 @@ func (l *LayerAlreadyExists) Status() string {
 	return "Already exists"
 }
 
-func (l *LayerAlreadyExists) Next(events.LayerEvent) (Layer, error) {
-	return nil, fmt.Errorf("already completed")
+func (l *LayerAlreadyExists) Next(event events.LayerEvent) (Layer, error) {
+	return nil, fmt.Errorf("already completed, tried %T", event)
 }
 
 type LayerPullComplete struct {
@@ -211,6 +213,6 @@ func (l *LayerPullComplete) Status() string {
 	return "Pull complete"
 }
 
-func (l *LayerPullComplete) Next(events.LayerEvent) (Layer, error) {
-	return nil, fmt.Errorf("already completed")
+func (l *LayerPullComplete) Next(event events.LayerEvent) (Layer, error) {
+	return nil, fmt.Errorf("already completed, tried %T", event)
 }
