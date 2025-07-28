@@ -22,3 +22,10 @@ func (p Progress) HumanCurrent() string {
 func (p Progress) HumanTotal() string {
 	return units.HumanSize(float64(p.Total))
 }
+
+func (p Progress) Number() float32 {
+	if p.Total == 0 {
+		return 0
+	}
+	return float32(p.Current) / float32(p.Total)
+}
