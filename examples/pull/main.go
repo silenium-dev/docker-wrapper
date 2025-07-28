@@ -35,7 +35,7 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	stateChan, err := cli.PullWithState(context.Background(), ref)
+	stateChan, err := cli.ImagePullWithState(context.Background(), ref)
 	if err != nil {
 		panic(err)
 	}
@@ -46,7 +46,7 @@ func main() {
 			logger.Infof("%02d [%s]: %s", idx, l.Id(), l.Status())
 		}
 	}
-	digest, err := cli.Pull(context.Background(), ref)
+	digest, err := cli.ImagePull(context.Background(), ref)
 	if err != nil {
 		panic(err)
 	}
