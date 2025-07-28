@@ -82,13 +82,23 @@ func (p *PullInProgress) Next(event events.PullEvent) (Pull, error) {
 			pullBase: p.pullBase,
 			error:    event.Error,
 		}
+	case *events.DownloadedNewerImage:
+		if p.digest == nil {
+			return nil, fmt.Errorf("cannot complete pull: no digest event received")
+		}
+		result = &PullComplete{
+			pullBase:        p.pullBase,
+			digest:          *p.digest,
+			downloadedNewer: true,
+		}
 	case events.FinalEvent:
 		if p.digest == nil {
 			return nil, fmt.Errorf("cannot complete pull: no digest event received")
 		}
 		result = &PullComplete{
-			pullBase: p.pullBase,
-			digest:   *p.digest,
+			pullBase:        p.pullBase,
+			digest:          *p.digest,
+			downloadedNewer: false,
 		}
 	}
 
@@ -110,7 +120,8 @@ func (p *PullErrored) Next(events.PullEvent) (Pull, error) {
 
 type PullComplete struct {
 	pullBase
-	digest digest.Digest
+	digest          digest.Digest
+	downloadedNewer bool
 }
 
 func (p *PullComplete) Status() string {
@@ -119,4 +130,12 @@ func (p *PullComplete) Status() string {
 
 func (p *PullComplete) Next(event events.PullEvent) (Pull, error) {
 	return nil, fmt.Errorf("pull already complete (event: %T)", event)
+}
+
+func (p *PullComplete) Digest() digest.Digest {
+	return p.digest
+}
+
+func (p *PullComplete) HasDownloadedNewer() bool {
+	return p.downloadedNewer
 }
