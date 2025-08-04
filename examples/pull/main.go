@@ -33,7 +33,7 @@ func main() {
 		panic(err)
 	}
 	//ref, err := reference.ParseDockerRef("quay.io/prometheus/prometheus:latest")
-	ref, err := reference.ParseDockerRef("localstack/localstack:latest")
+	ref, err := reference.ParseDockerRef("localstack/localstack:4")
 	if err != nil {
 		panic(err)
 	}
@@ -52,5 +52,5 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	logger.Infof("Digest: %s\n", digest)
+	logger.Infof("Digest: %s\n", digest.String())
 }

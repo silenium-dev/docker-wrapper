@@ -3,12 +3,14 @@ package state
 import (
 	"github.com/distribution/reference"
 	"github.com/google/go-containerregistry/pkg/v1"
+	"github.com/opencontainers/go-digest"
 	"github.com/silenium-dev/docker-wrapper/pkg/client/pull/events"
 )
 
 type Pull interface {
 	Ref() reference.Named
 	Manifest() *v1.Manifest
+	Digest() digest.Digest
 	Layers() []Layer
 	Layer(id string) Layer
 	Next(event events.PullEvent) (Pull, error)
@@ -25,6 +27,7 @@ type pullBase struct {
 	ref      reference.Named
 	layers   map[string]Layer
 	manifest *v1.Manifest
+	digest   v1.Hash
 }
 
 func (p *pullBase) Ref() reference.Named {
@@ -33,6 +36,10 @@ func (p *pullBase) Ref() reference.Named {
 
 func (p *pullBase) Manifest() *v1.Manifest {
 	return p.manifest
+}
+
+func (p *pullBase) Digest() digest.Digest {
+	return digest.Digest(p.digest.String())
 }
 
 func (p *pullBase) Layers() []Layer {

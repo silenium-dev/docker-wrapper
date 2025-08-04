@@ -21,10 +21,11 @@ func (p *PullInProgress) Status() string {
 	return "Finishing"
 }
 
-func NewPullState(ref reference.Named, manifest *v1.Manifest, event events.PullEvent) (Pull, error) {
+func NewPullState(ref reference.Named, manifest *v1.Manifest, dig v1.Hash, event events.PullEvent) (Pull, error) {
 	base := pullBase{
 		ref:      ref,
 		manifest: manifest,
+		digest:   dig,
 		layers:   make(map[string]Layer),
 	}
 	switch event := event.(type) {
@@ -140,10 +141,6 @@ func (p *PullComplete) Status() string {
 
 func (p *PullComplete) Next(event events.PullEvent) (Pull, error) {
 	return nil, fmt.Errorf("pull already complete (event: %T)", event)
-}
-
-func (p *PullComplete) Digest() digest.Digest {
-	return p.digest
 }
 
 func (p *PullComplete) HasDownloadedNewer() bool {

@@ -87,7 +87,7 @@ func Parse(event base.PullProgressEvent) (PullEvent, error) {
 			return &PullStarted{}, nil
 		}
 		if strings.HasPrefix(event.Status, "Digest:") {
-			hash := digest.FromString(strings.TrimPrefix(event.Status, "Digest: "))
+			hash := digest.Digest(strings.TrimPrefix(event.Status, "Digest: "))
 			return &Digest{hash}, nil
 		}
 		if strings.HasPrefix(event.Status, "Status:") {
