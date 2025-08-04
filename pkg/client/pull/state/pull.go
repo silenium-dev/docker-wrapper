@@ -22,14 +22,24 @@ func (p *PullInProgress) Status() string {
 }
 
 func NewPullState(ref reference.Named, manifest *v1.Manifest, event events.PullEvent) (Pull, error) {
-	switch event.(type) {
+	base := pullBase{
+		ref:      ref,
+		manifest: manifest,
+		layers:   make(map[string]Layer),
+	}
+	switch event := event.(type) {
 	case *events.PullStarted:
 		return &PullInProgress{
-			pullBase: pullBase{
-				ref:      ref,
-				manifest: manifest,
-				layers:   make(map[string]Layer),
-			},
+			pullBase: base,
+		}, nil
+	case events.LayerEvent:
+		var err error
+		base.layers[event.LayerId()], err = NewLayer(event)
+		if err != nil {
+			return nil, err
+		}
+		return &PullInProgress{
+			pullBase: base,
 		}, nil
 	}
 	return nil, fmt.Errorf("invalid initial event (%T)", event)
