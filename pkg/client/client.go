@@ -1,11 +1,12 @@
 package client
 
 import (
+	"net/http"
+	"slices"
+
 	"github.com/docker/docker/client"
 	"github.com/silenium-dev/docker-wrapper/pkg/client/auth"
 	"go.uber.org/zap"
-	"net/http"
-	"slices"
 )
 
 type Client struct {

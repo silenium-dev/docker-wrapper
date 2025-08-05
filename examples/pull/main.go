@@ -2,6 +2,8 @@ package main
 
 import (
 	"context"
+	"time"
+
 	"github.com/distribution/reference"
 	"github.com/docker/docker/api/types/image"
 	"github.com/docker/docker/api/types/registry"
@@ -9,7 +11,6 @@ import (
 	"github.com/silenium-dev/docker-wrapper/pkg/client"
 	"github.com/silenium-dev/docker-wrapper/pkg/client/auth"
 	"go.uber.org/zap"
-	"time"
 )
 
 func main() {
@@ -37,10 +38,12 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	stateChan, err := cli.ImagePullWithState(context.Background(), ref, image.PullOptions{})
+	id, manifest, stateChan, err := cli.ImagePullWithState(context.Background(), ref, image.PullOptions{})
 	if err != nil {
 		panic(err)
 	}
+	logger.Infof("Image ID: %s\n", id.String())
+	logger.Infof("Manifest digest: %s\n", manifest.Config.Digest.String())
 	for state := range stateChan {
 		print("\033[2J")
 		logger.Infof("%s", state.Status())
