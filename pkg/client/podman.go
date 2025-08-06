@@ -2,15 +2,12 @@ package client
 
 import (
 	"context"
-	"errors"
 	"fmt"
-	"os"
-	"runtime"
 
-	"github.com/containerd/errdefs"
+	"github.com/containers/common/pkg/config"
 	"github.com/containers/podman/v5/pkg/bindings"
 	"github.com/containers/podman/v5/pkg/bindings/system"
-	"github.com/silenium-dev/docker-wrapper/pkg/client/podman"
+	errdefs2 "github.com/docker/docker/errdefs"
 )
 
 var ErrNotPodman = fmt.Errorf("not a podman server")
@@ -33,6 +30,7 @@ func (c *Client) PodmanSocket() (string, error) {
 	return info.Host.RemoteSocket.Path, nil
 }
 
+// GetPodmanConnection returns a connection context to the podman host.
 func (c *Client) GetPodmanConnection(ctx context.Context) (context.Context, error) {
 	if ok, err := c.IsPodman(ctx); err != nil {
 		return nil, err
@@ -46,28 +44,11 @@ func (c *Client) GetPodmanConnection(ctx context.Context) (context.Context, erro
 		return connCtx, nil
 	}
 
-	dest, err := podman.GetDestination()
-	if errdefs.IsNotFound(err) && runtime.GOOS == "linux" {
-		uid := os.Getuid()
-		var err1, err2 error
-		if uid != 0 {
-			connCtx, err1 = bindings.NewConnection(ctx, fmt.Sprintf("unix:///run/user/%d/podman/podman.sock", uid))
-		}
-		if err1 != nil || uid == 0 {
-			connCtx, err2 = bindings.NewConnection(ctx, "unix:///run/podman/podman.sock")
-		}
-		if (err1 != nil || uid == 0) && err2 != nil {
-			return nil, fmt.Errorf("probably not podman, or sockets are not accessible: %w", errors.Join(err1, err2))
-		}
-	} else if err != nil {
+	dest, err := c.getConnection()
+	if err != nil {
 		return nil, err
-	} else {
-		connCtx, err = bindings.NewConnectionWithIdentity(ctx, dest.URI, dest.Identity, dest.IsMachine)
-		if err != nil {
-			return nil, err
-		}
 	}
-	return connCtx, nil
+	return bindings.NewConnectionWithIdentity(ctx, dest.URI, dest.Identity, dest.IsMachine)
 }
 
 func (c *Client) IsPodman(ctx context.Context) (bool, error) {
@@ -81,4 +62,17 @@ func (c *Client) IsPodman(ctx context.Context) (bool, error) {
 		}
 	}
 	return false, nil
+}
+
+func (c *Client) getDefaultConnection(conf *config.Config) (config.Connection, error) {
+	conns, err := conf.GetAllConnections()
+	if err != nil {
+		return config.Connection{}, err
+	}
+	for _, conn := range conns {
+		if conn.Default {
+			return conn, nil
+		}
+	}
+	return config.Connection{}, errdefs2.NotFound(fmt.Errorf("no default connection found"))
 }
