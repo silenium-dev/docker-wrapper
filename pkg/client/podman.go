@@ -9,10 +9,29 @@ import (
 
 	"github.com/containerd/errdefs"
 	"github.com/containers/podman/v5/pkg/bindings"
+	"github.com/containers/podman/v5/pkg/bindings/system"
 	"github.com/silenium-dev/docker-wrapper/pkg/client/podman"
 )
 
 var ErrNotPodman = fmt.Errorf("not a podman server")
+var ErrSocketNotEnabled = fmt.Errorf("podman socket is not enabled")
+
+// PodmanSocket returns the path to the podman socket on the podman host.
+// When talking with a podman machine, this might not be reachable for the caller.
+func (c *Client) PodmanSocket() (string, error) {
+	connCtx, err := c.GetPodmanConnection(context.Background())
+	if err != nil {
+		return "", err
+	}
+	info, err := system.Info(connCtx, &system.InfoOptions{})
+	if err != nil {
+		return "", err
+	}
+	if info.Host == nil || info.Host.RemoteSocket == nil || !info.Host.RemoteSocket.Exists {
+		return "", ErrSocketNotEnabled
+	}
+	return info.Host.RemoteSocket.Path, nil
+}
 
 func (c *Client) GetPodmanConnection(ctx context.Context) (context.Context, error) {
 	if ok, err := c.IsPodman(ctx); err != nil {

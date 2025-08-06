@@ -27,5 +27,11 @@ func main() {
 			panic(err)
 		}
 		println("Rootless:", info.Host.Security.Rootless)
+
+		socket, err := cli.PodmanSocket()
+		if err != nil {
+			panic(err)
+		}
+		println("Remote socket:", socket)
 	}
 }
