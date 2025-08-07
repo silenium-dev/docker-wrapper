@@ -11,7 +11,6 @@ import (
 
 type Client struct {
 	*client.Client
-	httpClient   *http.Client
 	dockerOpts   []client.Opt
 	authProvider auth.Provider
 	logger       *zap.SugaredLogger
@@ -31,10 +30,6 @@ func NewWithOpts(opts ...Opt) (*Client, error) {
 	if c.logger == nil {
 		c.logger = zap.Must(zap.NewDevelopment()).Sugar()
 	}
-	if c.httpClient == nil {
-		c.httpClient = http.DefaultClient
-	}
-
 	cli, err := client.NewClientWithOpts(c.dockerOpts...)
 	if err != nil {
 		return nil, err
@@ -82,7 +77,7 @@ func WithDockerOpts(opts ...client.Opt) Opt {
 
 func WithHTTPClient(httpClient *http.Client) Opt {
 	return func(c *Client) error {
-		c.httpClient = httpClient
+		c.dockerOpts = append(c.dockerOpts, client.WithHTTPClient(httpClient))
 		return nil
 	}
 }

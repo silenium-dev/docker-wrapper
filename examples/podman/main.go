@@ -3,8 +3,8 @@ package main
 import (
 	"context"
 
-	"github.com/containers/podman/v5/pkg/bindings/system"
 	"github.com/silenium-dev/docker-wrapper/pkg/client"
+	client2 "github.com/silenium-dev/docker-wrapper/pkg/client/podman/client"
 )
 
 func main() {
@@ -18,17 +18,18 @@ func main() {
 	}
 	println("Is Podman:", isPodman)
 	if isPodman {
-		conn, err := cli.GetPodmanConnection(context.Background())
+		podmanCli, err := client2.FromDocker(context.Background(), cli, nil, nil)
 		if err != nil {
 			panic(err)
 		}
-		info, err := system.Info(conn, &system.InfoOptions{})
+
+		info, err := podmanCli.SystemInfo(context.Background())
 		if err != nil {
 			panic(err)
 		}
 		println("Rootless:", info.Host.Security.Rootless)
 
-		socket, err := cli.PodmanSocket()
+		socket, err := podmanCli.RemoteSocket(context.Background())
 		if err != nil {
 			panic(err)
 		}
