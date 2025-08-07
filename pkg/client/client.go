@@ -46,6 +46,10 @@ func (c *Client) AuthProvider() auth.Provider {
 	return c.authProvider
 }
 
+func (c *Client) Logger() *zap.SugaredLogger {
+	return c.logger
+}
+
 func WithVersionNegotiation(c *Client) error {
 	c.dockerOpts = append(c.dockerOpts, client.WithAPIVersionNegotiation())
 	return nil

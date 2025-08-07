@@ -57,3 +57,7 @@ func (p *Podman) Connection() *bindings.Connection {
 func (p *Podman) APIVersion() *semver.Version {
 	return p.ver
 }
+
+func (p *Podman) Logger() *zap.SugaredLogger {
+	return p.logger
+}
