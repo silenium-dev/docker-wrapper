@@ -42,6 +42,10 @@ func (c *Client) Close() error {
 	return c.Client.Close()
 }
 
+func (c *Client) AuthProvider() auth.Provider {
+	return c.authProvider
+}
+
 func WithVersionNegotiation(c *Client) error {
 	c.dockerOpts = append(c.dockerOpts, client.WithAPIVersionNegotiation())
 	return nil

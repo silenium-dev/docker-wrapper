@@ -46,10 +46,14 @@ func FromDocker(
 	}, nil
 }
 
-func mustGetClient(ctx context.Context) *bindings.Connection {
-	conn, err := bindings.GetClient(ctx)
-	if err != nil {
-		panic(fmt.Errorf("connection missing (this is a bug!!): %w", err))
-	}
-	return conn
+func (p *Podman) AuthProvider() auth.Provider {
+	return p.authProvider
+}
+
+func (p *Podman) Connection() *bindings.Connection {
+	return p.conn
+}
+
+func (p *Podman) APIVersion() *semver.Version {
+	return p.ver
 }
