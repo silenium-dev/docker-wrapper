@@ -55,7 +55,7 @@ func getConnection(ctx context.Context, c *client2.Client, logger *zap.SugaredLo
 	return conn, nil
 }
 
-func directConnection(ctx context.Context, uri url.URL) (*bindings.Connection, *semver.Version, error) {
+func directConnection(ctx context.Context, uri *url.URL) (*bindings.Connection, *semver.Version, error) {
 	connCtx, err := bindings.NewConnection(ctx, uri.String())
 	if err != nil {
 		return nil, nil, err
