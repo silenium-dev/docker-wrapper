@@ -35,4 +35,10 @@ func main() {
 		}
 		println("Remote socket:", socket)
 	}
+
+	hostIP, err := cli.HostIPFromContainers(context.Background())
+	if err != nil {
+		panic(err)
+	}
+	println("Host IP from containers:", hostIP.String())
 }
