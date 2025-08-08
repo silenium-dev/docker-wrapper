@@ -15,6 +15,7 @@ type Pull interface {
 	Layer(id string) Layer
 	Next(event events.PullEvent) (Pull, error)
 	Status() string
+	Base() PullBase
 }
 
 type Layer interface {
@@ -23,26 +24,31 @@ type Layer interface {
 	Next(event events.LayerEvent) (Layer, error)
 }
 
-type pullBase struct {
+type PullBase struct {
 	ref      reference.Named
 	layers   map[string]Layer
 	manifest *v1.Manifest
 	digest   v1.Hash
+	isPodman bool
 }
 
-func (p *pullBase) Ref() reference.Named {
+func (p *PullBase) Base() PullBase {
+	return *p
+}
+
+func (p *PullBase) Ref() reference.Named {
 	return p.ref
 }
 
-func (p *pullBase) Manifest() *v1.Manifest {
+func (p *PullBase) Manifest() *v1.Manifest {
 	return p.manifest
 }
 
-func (p *pullBase) Digest() digest.Digest {
+func (p *PullBase) Digest() digest.Digest {
 	return digest.Digest(p.digest.String())
 }
 
-func (p *pullBase) Layers() []Layer {
+func (p *PullBase) Layers() []Layer {
 	layers := make([]Layer, 0, len(p.layers))
 	for _, l := range p.manifest.Layers {
 		for i := 1; i <= len(l.Digest.Hex); i++ {
@@ -56,12 +62,13 @@ func (p *pullBase) Layers() []Layer {
 	return layers
 }
 
-func (p *pullBase) Layer(id string) Layer {
+func (p *PullBase) Layer(id string) Layer {
 	return p.layers[id]
 }
 
 type layerBase struct {
-	id string
+	id       string
+	isPodman bool
 }
 
 func (l *layerBase) Id() string {

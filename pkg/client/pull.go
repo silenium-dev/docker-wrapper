@@ -3,6 +3,7 @@ package client
 import (
 	"context"
 	"fmt"
+
 	"github.com/containerd/platforms"
 	"github.com/distribution/reference"
 	"github.com/docker/docker/api/types/image"
@@ -18,7 +19,9 @@ import (
 	"go.uber.org/zap"
 )
 
-func (c *Client) ImagePullWithEvents(ctx context.Context, ref reference.Named, options image.PullOptions) (v1.Hash, *v1.Manifest, chan events.PullEvent, error) {
+func (c *Client) ImagePullWithEvents(ctx context.Context, ref reference.Named, options image.PullOptions) (
+	v1.Hash, *v1.Manifest, chan events.PullEvent, error,
+) {
 	if options.RegistryAuth != "" || options.PrivilegeFunc != nil {
 		c.logger.WithOptions(zap.AddStacktrace(zap.DPanicLevel)).Warnf("privilege function and registry auth in options are not supported, please use auth provider instead")
 		options.RegistryAuth = ""
@@ -48,13 +51,20 @@ func (c *Client) ImagePullWithEvents(ctx context.Context, ref reference.Named, o
 	return imageId, manifest, pull.ParseStream(ctx, reader), nil
 }
 
-func (c *Client) ImagePullWithState(ctx context.Context, ref reference.Named, options image.PullOptions) (v1.Hash, *v1.Manifest, chan state.Pull, error) {
+func (c *Client) ImagePullWithState(ctx context.Context, ref reference.Named, options image.PullOptions) (
+	v1.Hash, *v1.Manifest, chan state.Pull, error,
+) {
+	isPodman, err := c.IsPodman(ctx)
+	if err != nil {
+		return v1.Hash{}, nil, nil, err
+	}
+
 	id, manifest, eventChan, err := c.ImagePullWithEvents(ctx, ref, options)
 	if err != nil {
 		return v1.Hash{}, nil, nil, err
 	}
 
-	return id, manifest, pull.StateFromStream(ctx, ref, eventChan, manifest, id), nil
+	return id, manifest, pull.StateFromStream(ctx, ref, isPodman, eventChan, manifest, id), nil
 }
 
 func (c *Client) ImagePull(ctx context.Context, ref reference.Named, options image.PullOptions) (digest.Digest, error) {
@@ -69,7 +79,9 @@ func (c *Client) ImagePull(ctx context.Context, ref reference.Named, options ima
 	return digest.Digest(dig.String()), nil
 }
 
-func (c *Client) ImageGetManifest(ctx context.Context, ref reference.Named, platform *v1.Platform) (v1.Hash, *v1.Manifest, error) {
+func (c *Client) ImageGetManifest(ctx context.Context, ref reference.Named, platform *v1.Platform) (
+	v1.Hash, *v1.Manifest, error,
+) {
 	var err error
 	if platform == nil {
 		platform, err = c.ImageDefaultPlatform(ctx)
@@ -109,10 +121,12 @@ func (c *Client) ImageDefaultPlatform(ctx context.Context) (*v1.Platform, error)
 	if err != nil {
 		return nil, err
 	}
-	normalized := platforms.Normalize(v2.Platform{
-		OS:           info.OSType,
-		Architecture: info.Architecture,
-	})
+	normalized := platforms.Normalize(
+		v2.Platform{
+			OS:           info.OSType,
+			Architecture: info.Architecture,
+		},
+	)
 
 	return &v1.Platform{
 		OS:           normalized.OS,
@@ -123,7 +137,9 @@ func (c *Client) ImageDefaultPlatform(ctx context.Context) (*v1.Platform, error)
 	}, nil
 }
 
-func (c *Client) getManifest(ctx context.Context, ref reference.Named, options image.PullOptions) (v1.Hash, *v1.Manifest, error) {
+func (c *Client) getManifest(ctx context.Context, ref reference.Named, options image.PullOptions) (
+	v1.Hash, *v1.Manifest, error,
+) {
 	var platform *v1.Platform
 	var err error
 	if options.Platform != "" {
