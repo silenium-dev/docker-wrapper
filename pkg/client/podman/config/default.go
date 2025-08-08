@@ -12,10 +12,10 @@ import (
 	"github.com/containers/common/libnetwork/types"
 	"github.com/containers/common/pkg/cgroupv2"
 	"github.com/containers/storage/pkg/fileutils"
-	types2 "github.com/containers/storage/types"
 	"github.com/silenium-dev/docker-wrapper/pkg/client/podman/config/apparmor"
 	"github.com/silenium-dev/docker-wrapper/pkg/client/podman/config/attributedstring"
 	"github.com/silenium-dev/docker-wrapper/pkg/client/podman/config/homedir"
+	types2 "github.com/silenium-dev/docker-wrapper/pkg/client/podman/config/types"
 	"github.com/silenium-dev/docker-wrapper/pkg/client/podman/config/unshare"
 	"github.com/sirupsen/logrus"
 )
