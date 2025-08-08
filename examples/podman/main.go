@@ -36,7 +36,7 @@ func main() {
 		println("Remote socket:", socket)
 	}
 
-	hostIP, err := cli.HostIPFromContainers(context.Background())
+	hostIP, err := cli.HostIPFromContainers(context.Background(), nil)
 	if err != nil {
 		panic(err)
 	}

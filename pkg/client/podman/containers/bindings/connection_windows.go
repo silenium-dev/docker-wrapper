@@ -25,6 +25,5 @@ func npipeClient(_url *url.URL, _ string, _ string, _ bool) (Connection, error) 
 }
 
 func init() {
-	println("registering npipe connection factory")
 	connectionFactories["npipe"] = npipeClient
 }
