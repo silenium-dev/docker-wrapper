@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/containers/podman/v5/libpod/define"
+	"github.com/silenium-dev/docker-wrapper/pkg/client/podman/containers/libpod/define"
 )
 
 var ErrSocketNotEnabled = fmt.Errorf("podman socket is not enabled")

@@ -24,9 +24,9 @@ import (
 	// https://github.com/golang/go/issues/29286
 	// https://github.com/containers/podman/issues/23575
 	"github.com/containers/storage/pkg/fileutils"
-	"github.com/containers/storage/pkg/homedir"
 	"github.com/pkg/sftp"
 	"github.com/silenium-dev/docker-wrapper/pkg/client/podman/containers/config"
+	"github.com/silenium-dev/docker-wrapper/pkg/client/podman/containers/homedir"
 	"github.com/sirupsen/logrus"
 	"github.com/skeema/knownhosts"
 	"golang.org/x/crypto/ssh"
