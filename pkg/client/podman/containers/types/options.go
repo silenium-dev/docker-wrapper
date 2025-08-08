@@ -13,8 +13,8 @@ import (
 	cfg "github.com/containers/storage/pkg/config"
 	"github.com/containers/storage/pkg/fileutils"
 	"github.com/containers/storage/pkg/idtools"
-	"github.com/silenium-dev/docker-wrapper/pkg/client/podman/config/homedir"
-	"github.com/silenium-dev/docker-wrapper/pkg/client/podman/config/unshare"
+	"github.com/silenium-dev/docker-wrapper/pkg/client/podman/containers/homedir"
+	"github.com/silenium-dev/docker-wrapper/pkg/client/podman/containers/unshare"
 	"github.com/sirupsen/logrus"
 )
 

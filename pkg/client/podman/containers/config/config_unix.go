@@ -6,7 +6,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/silenium-dev/docker-wrapper/pkg/client/podman/config/unshare"
+	"github.com/silenium-dev/docker-wrapper/pkg/client/podman/containers/unshare"
 )
 
 // _configPath is the path to the containers/containers.conf

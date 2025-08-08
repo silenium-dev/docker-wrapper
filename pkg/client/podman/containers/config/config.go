@@ -14,7 +14,7 @@ import (
 	"github.com/containers/storage/pkg/fileutils"
 	"github.com/docker/go-units"
 	"github.com/opencontainers/selinux/go-selinux"
-	"github.com/silenium-dev/docker-wrapper/pkg/client/podman/config/attributedstring"
+	"github.com/silenium-dev/docker-wrapper/pkg/client/podman/containers/attributedstring"
 	"github.com/sirupsen/logrus"
 )
 

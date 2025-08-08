@@ -5,9 +5,9 @@ import (
 	"fmt"
 
 	"github.com/blang/semver/v4"
-	"github.com/containers/podman/v5/pkg/bindings"
 	"github.com/silenium-dev/docker-wrapper/pkg/client"
 	"github.com/silenium-dev/docker-wrapper/pkg/client/auth"
+	"github.com/silenium-dev/docker-wrapper/pkg/client/podman/containers/bindings"
 	"go.uber.org/zap"
 )
 

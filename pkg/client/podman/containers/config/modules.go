@@ -6,8 +6,8 @@ import (
 
 	"github.com/containers/storage/pkg/fileutils"
 	"github.com/hashicorp/go-multierror"
-	"github.com/silenium-dev/docker-wrapper/pkg/client/podman/config/homedir"
-	"github.com/silenium-dev/docker-wrapper/pkg/client/podman/config/unshare"
+	"github.com/silenium-dev/docker-wrapper/pkg/client/podman/containers/homedir"
+	"github.com/silenium-dev/docker-wrapper/pkg/client/podman/containers/unshare"
 )
 
 // The subdirectory for looking up containers.conf modules.

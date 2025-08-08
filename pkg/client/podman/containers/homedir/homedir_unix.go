@@ -14,7 +14,7 @@ import (
 	"sync"
 	"syscall"
 
-	"github.com/silenium-dev/docker-wrapper/pkg/client/podman/config/unshare"
+	"github.com/silenium-dev/docker-wrapper/pkg/client/podman/containers/unshare"
 	"github.com/sirupsen/logrus"
 )
 
