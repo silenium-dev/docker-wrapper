@@ -80,6 +80,15 @@ func (c *Client) HostIPFromContainers(ctx context.Context, netId *string) (net.I
 	} else {
 		endpoint, ok := inspect.NetworkSettings.Networks[*netId]
 		if !ok {
+			for _, v := range inspect.NetworkSettings.Networks {
+				if v.NetworkID == *netId {
+					endpoint = v
+					ok = true
+					break
+				}
+			}
+		}
+		if !ok {
 			return nil, fmt.Errorf("network %s not found in container %s", *netId, cont.ID)
 		}
 		ipAddrStr = endpoint.Gateway

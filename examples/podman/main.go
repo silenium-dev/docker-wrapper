@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 
+	"github.com/docker/docker/api/types/network"
 	"github.com/silenium-dev/docker-wrapper/pkg/client"
 	client2 "github.com/silenium-dev/docker-wrapper/pkg/client/podman/client"
 )
@@ -36,7 +37,13 @@ func main() {
 		println("Remote socket:", socket)
 	}
 
-	hostIP, err := cli.HostIPFromContainers(context.Background(), nil)
+	netResp, err := cli.NetworkCreate(context.Background(), "test_network", network.CreateOptions{})
+	if err != nil {
+		panic(err)
+	}
+	defer cli.NetworkRemove(context.Background(), netResp.ID)
+
+	hostIP, err := cli.HostIPFromContainers(context.Background(), &netResp.ID)
 	if err != nil {
 		panic(err)
 	}
