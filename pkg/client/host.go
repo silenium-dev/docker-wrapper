@@ -75,8 +75,14 @@ func (c *Client) HostIPFromContainers(ctx context.Context, netId *string) (net.I
 			return nil, fmt.Errorf("no output from container %s", cont.ID)
 		}
 		ipAddrStr = strings.TrimSpace(string(ipAddrByteStr))
-	} else {
+	} else if netId == nil {
 		ipAddrStr = inspect.NetworkSettings.Gateway
+	} else {
+		endpoint, ok := inspect.NetworkSettings.Networks[*netId]
+		if !ok {
+			return nil, fmt.Errorf("network %s not found in container %s", *netId, cont.ID)
+		}
+		ipAddrStr = endpoint.Gateway
 	}
 
 	ipAddr := net.ParseIP(ipAddrStr)
