@@ -7,17 +7,16 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
-	"strconv"
 	"sync"
 
 	"github.com/containers/common/libnetwork/types"
 	"github.com/containers/common/pkg/cgroupv2"
 	"github.com/containers/storage/pkg/fileutils"
 	"github.com/containers/storage/pkg/homedir"
-	"github.com/containers/storage/pkg/unshare"
 	types2 "github.com/containers/storage/types"
 	"github.com/silenium-dev/docker-wrapper/pkg/client/podman/config/apparmor"
 	"github.com/silenium-dev/docker-wrapper/pkg/client/podman/config/attributedstring"
+	"github.com/silenium-dev/docker-wrapper/pkg/client/podman/config/unshare"
 	"github.com/sirupsen/logrus"
 )
 
@@ -533,7 +532,7 @@ func defaultEngineConfig() (*EngineConfig, error) {
 func defaultTmpDir() (string, error) {
 	// NOTE: For now we want Windows to use system locations.
 	// GetRootlessUID == -1 on Windows, so exclude negative range
-	rootless := GetRootlessUID() > 0
+	rootless := unshare.GetRootlessUID() > 0
 	if !rootless {
 		return getLibpodTmpDir(), nil
 	}
@@ -553,15 +552,6 @@ func defaultTmpDir() (string, error) {
 		}
 	}
 	return filepath.Join(libpodRuntimeDir, "tmp"), nil
-}
-
-func GetRootlessUID() int {
-	uidEnv := os.Getenv("_CONTAINERS_ROOTLESS_UID")
-	if uidEnv != "" {
-		u, _ := strconv.Atoi(uidEnv)
-		return u
-	}
-	return os.Getuid()
 }
 
 func getDefaultSSHConfig() string {

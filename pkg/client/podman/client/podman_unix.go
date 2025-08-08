@@ -43,6 +43,7 @@ func getConnection(ctx context.Context, c *client2.Client, logger *zap.SugaredLo
 		conn.Destination.URI = sock
 	}
 	if err1 != nil || uid == 0 {
+		conn.Name = "podman-rootful"
 		sock := "unix:///run/podman/podman.sock"
 		_, err2 = bindings.NewConnection(queryCtx, sock)
 		conn.Destination.URI = sock
