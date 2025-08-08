@@ -34,11 +34,16 @@ func (c *Client) HostIPFromContainers(ctx context.Context, netId *string) (net.I
 		endpoints[*netId] = &network.EndpointSettings{}
 	}
 
+	command := []string{"sh", "-c", "sleep infinity"}
+	if isPodman {
+		command = []string{"dig", "+short", "A", "host.docker.internal"}
+	}
+
 	cont, err := c.ContainerCreate(
 		ctx,
 		&container.Config{
 			Image:      c.imageProvider.GetDnsUtilImage(),
-			Entrypoint: []string{"dig", "+short", "A", "host.docker.internal"},
+			Entrypoint: command,
 		},
 		&container.HostConfig{},
 		&network.NetworkingConfig{EndpointsConfig: endpoints},
@@ -59,20 +64,22 @@ func (c *Client) HostIPFromContainers(ctx context.Context, netId *string) (net.I
 	if err != nil {
 		return nil, fmt.Errorf("failed to inspect container %s: %w", cont.ID, err)
 	}
+	var ipAddrStr string
+	if isPodman {
+		multiplex, err := c.StreamLogs(ctx, cont.ID, true)
+		if err != nil {
+			return nil, err
+		}
+		ipAddrByteStr, ok := <-multiplex.Stdout()
+		if !ok {
+			return nil, fmt.Errorf("no output from container %s", cont.ID)
+		}
+		ipAddrStr = strings.TrimSpace(string(ipAddrByteStr))
+	} else {
+		ipAddrStr = inspect.NetworkSettings.Gateway
+	}
 
-	multiplex, err := c.StreamLogs(ctx, cont.ID, true)
-	if err != nil {
-		return nil, err
-	}
-	ipAddrStr, ok := <-multiplex.Stdout()
-	if !ok {
-		return nil, fmt.Errorf("no output from container %s", cont.ID)
-	}
-	if !isPodman {
-		ipAddrStr = []byte(inspect.NetworkSettings.Gateway)
-	}
-
-	ipAddr := net.ParseIP(strings.TrimSpace(string(ipAddrStr)))
+	ipAddr := net.ParseIP(ipAddrStr)
 	if ipAddr == nil {
 		return nil, fmt.Errorf("failed to parse IP address from: %s", ipAddrStr)
 	}
