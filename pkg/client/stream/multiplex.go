@@ -11,31 +11,31 @@ import (
 	"go.uber.org/zap"
 )
 
-type StreamType int
+type Type int
 
 const (
-	StreamTypeStdin       StreamType = 0
-	StreamTypeStdout      StreamType = 1
-	StreamTypeStderr      StreamType = 2
-	StreamTypeSystemError StreamType = 3
+	TypeStdin       Type = 0
+	TypeStdout      Type = 1
+	TypeStderr      Type = 2
+	TypeSystemError Type = 3
 )
 
-func (s StreamType) Name() string {
+func (s Type) Name() string {
 	switch s {
-	case StreamTypeStdin:
+	case TypeStdin:
 		return "stdin"
-	case StreamTypeStdout:
+	case TypeStdout:
 		return "stdout"
-	case StreamTypeStderr:
+	case TypeStderr:
 		return "stderr"
-	case StreamTypeSystemError:
+	case TypeSystemError:
 		return "system_error"
 	default:
 		return "unknown"
 	}
 }
 
-func (s StreamType) IsValid() bool {
+func (s Type) IsValid() bool {
 	return s.Name() != "unknown"
 }
 
@@ -144,7 +144,7 @@ func (m *MultiplexedStream) handleMultiplexOutput(ctx context.Context) {
 			m.logger.Errorf("failed to read multiplexed output header: %v", err)
 			return
 		}
-		streamType := StreamType(header[0])
+		streamType := Type(header[0])
 		if !streamType.IsValid() {
 			m.logger.Errorf("invalid stream type: %d", streamType)
 			return
@@ -166,11 +166,11 @@ func (m *MultiplexedStream) handleMultiplexOutput(ctx context.Context) {
 		}
 
 		switch streamType {
-		case StreamTypeStdout:
+		case TypeStdout:
 			m.stdOut <- data
-		case StreamTypeStderr:
+		case TypeStderr:
 			m.stdErr <- data
-		case StreamTypeSystemError:
+		case TypeSystemError:
 			m.systemError <- data
 		default:
 			m.logger.Warnf("unexpected stream type: %s", streamType.Name())

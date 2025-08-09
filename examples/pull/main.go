@@ -15,11 +15,11 @@ import (
 
 func main() {
 	logger := zap.Must(zap.NewDevelopment()).Sugar()
-	authProvider, err := auth.NewDefaultProvider()
+	authProvider, err := auth.NewDefaultAuthProvider()
 	if err != nil {
 		panic(err)
 	}
-	override := auth.NewOverridingProvider(
+	override := auth.NewOverridingAuthProvider(
 		authProvider, map[string]registry.AuthConfig{},
 		auth.WithSugaredLogger(logger.With(zap.String("component", "auth-provider"))),
 	).WithOverride("quay.io", registry.AuthConfig{})
@@ -51,7 +51,7 @@ func main() {
 			logger.Infof("%02d [%s]: %s", idx, l.Id(), l.Status())
 		}
 	}
-	digest, err := cli.ImagePull(context.Background(), ref, image.PullOptions{})
+	digest, err := cli.ImagePullSimple(context.Background(), ref, image.PullOptions{})
 	if err != nil {
 		panic(err)
 	}

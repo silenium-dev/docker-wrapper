@@ -16,14 +16,14 @@ type Podman struct {
 	conn         *bindings.Connection
 	ver          *semver.Version
 	logger       *zap.SugaredLogger
-	authProvider auth.Provider
+	authProvider auth.AuthProvider
 }
 
 // FromDocker derives a podman connection from the docker remote. Fails if remote is not a podman engine
 func FromDocker(
 	ctx context.Context,
 	cli *client.Client,
-	authProvider auth.Provider,
+	authProvider auth.AuthProvider,
 	logger *zap.SugaredLogger,
 ) (*Podman, error) {
 	if logger == nil {
@@ -46,7 +46,7 @@ func FromDocker(
 	}, nil
 }
 
-func (p *Podman) AuthProvider() auth.Provider {
+func (p *Podman) AuthProvider() auth.AuthProvider {
 	return p.authProvider
 }
 

@@ -12,8 +12,10 @@ import (
 
 var ErrNotPodman = fmt.Errorf("not a podman server")
 
-func getPodmanConnection(cli *client.Client, ctx context.Context, logger *zap.SugaredLogger) (*bindings.Connection, *semver.Version, error) {
-	if ok, err := cli.IsPodman(ctx); err != nil {
+func getPodmanConnection(cli *client.Client, ctx context.Context, logger *zap.SugaredLogger) (
+	*bindings.Connection, *semver.Version, error,
+) {
+	if ok, err := cli.SystemIsPodman(ctx); err != nil {
 		return nil, nil, err
 	} else if !ok {
 		return nil, nil, ErrNotPodman

@@ -1,19 +1,20 @@
-package auth
+package provider
 
 import (
 	"encoding/base64"
 	"errors"
 	"fmt"
+	"os"
+
 	"github.com/cpuguy83/dockercfg"
 	"github.com/distribution/reference"
 	"github.com/docker/docker/api/types/registry"
 	"github.com/google/go-containerregistry/pkg/authn"
-	"os"
 )
 
 type DefaultAuthProvider struct {
 	authConfigs map[string]registry.AuthConfig
-	config      *ProviderConfig
+	config      *AuthProviderConfig
 }
 
 func (d *DefaultAuthProvider) Resolve(resource authn.Resource) (authn.Authenticator, error) {
@@ -34,7 +35,7 @@ func (d *DefaultAuthProvider) AuthConfig(ref reference.Named) registry.AuthConfi
 	return registry.AuthConfig{}
 }
 
-func NewDefaultProvider(opts ...Opt) (*DefaultAuthProvider, error) {
+func NewDefaultAuthProvider(opts ...AuthOpt) (*DefaultAuthProvider, error) {
 	config := renderConfig(opts)
 
 	authConfigs := map[string]registry.AuthConfig{}

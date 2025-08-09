@@ -13,7 +13,7 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	isPodman, err := cli.IsPodman(context.Background())
+	isPodman, err := cli.SystemIsPodman(context.Background())
 	if err != nil {
 		panic(err)
 	}
@@ -43,7 +43,7 @@ func main() {
 	}
 	defer cli.NetworkRemove(context.Background(), netResp.ID)
 
-	hostIP, err := cli.HostIPFromContainers(context.Background(), &netResp.ID)
+	hostIP, err := cli.SystemHostIPFromContainers(context.Background(), &netResp.ID)
 	if err != nil {
 		panic(err)
 	}

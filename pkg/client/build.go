@@ -2,12 +2,15 @@ package client
 
 import (
 	"context"
-	"github.com/docker/docker/api/types"
 	"io"
 	"maps"
+
+	"github.com/docker/docker/api/types/build"
 )
 
-func (c *Client) ImageBuild(ctx context.Context, buildContext io.Reader, opts types.ImageBuildOptions) (types.ImageBuildResponse, error) {
+func (c *Client) ImageBuild(
+	ctx context.Context, buildContext io.Reader, opts build.ImageBuildOptions,
+) (build.ImageBuildResponse, error) {
 	authConfigs := c.authProvider.AuthConfigs()
 	maps.Copy(authConfigs, opts.AuthConfigs)
 	opts.AuthConfigs = authConfigs

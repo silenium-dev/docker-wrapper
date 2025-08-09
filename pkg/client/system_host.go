@@ -11,7 +11,7 @@ import (
 	"k8s.io/apimachinery/pkg/util/rand"
 )
 
-func (c *Client) HostIPFromContainers(ctx context.Context, netId *string) (net.IP, error) {
+func (c *Client) SystemHostIPFromContainers(ctx context.Context, netId *string) (net.IP, error) {
 	c.hostFromContainerMutex.RLock()
 	if c.hostFromContainerAddr != nil { // Fast path
 		defer c.hostFromContainerMutex.RUnlock()
@@ -24,7 +24,7 @@ func (c *Client) HostIPFromContainers(ctx context.Context, netId *string) (net.I
 		return c.hostFromContainerAddr, nil
 	}
 
-	isPodman, err := c.IsPodman(ctx)
+	isPodman, err := c.SystemIsPodman(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to check if Podman: %w", err)
 	}
