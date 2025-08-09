@@ -1,4 +1,4 @@
-package auth
+package provider
 
 import (
 	"github.com/distribution/reference"
@@ -7,32 +7,32 @@ import (
 	"go.uber.org/zap"
 )
 
-type Provider interface {
+type AuthProvider interface {
 	authn.Keychain
 	AuthConfig(ref reference.Named) registry.AuthConfig
 	AuthConfigs() map[string]registry.AuthConfig
 }
 
-type ProviderConfig struct {
+type AuthProviderConfig struct {
 	Logger *zap.SugaredLogger
 }
 
-type Opt func(config *ProviderConfig)
+type AuthOpt func(config *AuthProviderConfig)
 
-func WithLogger(logger *zap.Logger) Opt {
-	return func(config *ProviderConfig) {
+func WithLogger(logger *zap.Logger) AuthOpt {
+	return func(config *AuthProviderConfig) {
 		config.Logger = logger.Sugar()
 	}
 }
 
-func WithSugaredLogger(logger *zap.SugaredLogger) Opt {
-	return func(config *ProviderConfig) {
+func WithSugaredLogger(logger *zap.SugaredLogger) AuthOpt {
+	return func(config *AuthProviderConfig) {
 		config.Logger = logger
 	}
 }
 
-func renderConfig(opts []Opt) *ProviderConfig {
-	config := &ProviderConfig{}
+func renderConfig(opts []AuthOpt) *AuthProviderConfig {
+	config := &AuthProviderConfig{}
 	for _, opt := range opts {
 		opt(config)
 	}

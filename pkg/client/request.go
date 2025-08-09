@@ -4,8 +4,9 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	"github.com/distribution/reference"
 	"net/http"
+
+	"github.com/distribution/reference"
 )
 
 func (c *Client) RequestAuthenticate(req *http.Request, ref reference.Named) error {

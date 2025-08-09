@@ -1,22 +1,23 @@
 package client
 
 import (
+	"net"
+	"sync"
+
 	"github.com/docker/docker/client"
-	"github.com/silenium-dev/docker-wrapper/pkg/client/auth"
+	"github.com/silenium-dev/docker-wrapper/pkg/client/provider"
 	"go.uber.org/zap"
-	"net/http"
-	"slices"
 )
 
 type Client struct {
 	*client.Client
-	httpClient   *http.Client
-	dockerOpts   []client.Opt
-	authProvider auth.Provider
-	logger       *zap.SugaredLogger
+	dockerOpts             []client.Opt
+	authProvider           provider.AuthProvider
+	imageProvider          provider.ImageProvider
+	logger                 *zap.SugaredLogger
+	hostFromContainerAddr  net.IP
+	hostFromContainerMutex sync.RWMutex
 }
-
-type Opt func(*Client) error
 
 func NewWithOpts(opts ...Opt) (*Client, error) {
 	c := &Client{}
@@ -30,8 +31,8 @@ func NewWithOpts(opts ...Opt) (*Client, error) {
 	if c.logger == nil {
 		c.logger = zap.Must(zap.NewDevelopment()).Sugar()
 	}
-	if c.httpClient == nil {
-		c.httpClient = http.DefaultClient
+	if c.imageProvider == nil {
+		c.imageProvider = provider.DefaultImageProvider()
 	}
 
 	cli, err := client.NewClientWithOpts(c.dockerOpts...)
@@ -40,53 +41,4 @@ func NewWithOpts(opts ...Opt) (*Client, error) {
 	}
 	c.Client = cli
 	return c, nil
-}
-
-func (c *Client) Close() error {
-	return c.Client.Close()
-}
-
-func WithVersionNegotiation(c *Client) error {
-	c.dockerOpts = append(c.dockerOpts, client.WithAPIVersionNegotiation())
-	return nil
-}
-
-func WithAuthProvider(authProvider auth.Provider) Opt {
-	return func(c *Client) error {
-		c.authProvider = authProvider
-		return nil
-	}
-}
-
-func WithSugaredLogger(logger *zap.SugaredLogger) Opt {
-	return func(c *Client) error {
-		c.logger = logger
-		return nil
-	}
-}
-
-func WithLogger(logger *zap.Logger) Opt {
-	return func(c *Client) error {
-		c.logger = logger.Sugar()
-		return nil
-	}
-}
-
-func WithDockerOpts(opts ...client.Opt) Opt {
-	return func(c *Client) error {
-		c.dockerOpts = slices.Concat(c.dockerOpts, opts)
-		return nil
-	}
-}
-
-func WithHTTPClient(httpClient *http.Client) Opt {
-	return func(c *Client) error {
-		c.httpClient = httpClient
-		return nil
-	}
-}
-
-func FromEnv(c *Client) error {
-	c.dockerOpts = append(c.dockerOpts, client.FromEnv)
-	return nil
 }

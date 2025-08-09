@@ -2,18 +2,20 @@ package state
 
 import (
 	"fmt"
-	"github.com/silenium-dev/docker-wrapper/pkg/client/pull/events"
 	"time"
+
+	"github.com/silenium-dev/docker-wrapper/pkg/client/pull/events"
 )
 
-func NewLayer(event events.LayerEvent) (Layer, error) {
+func NewLayer(isPodman bool, event events.LayerEvent) (Layer, error) {
+	base := layerBase{id: event.LayerId(), isPodman: isPodman}
 	switch event := event.(type) {
 	case *events.PullingFSLayer:
-		return &LayerPullingFSLayer{layerBase{event.LayerId()}}, nil
+		return &LayerPullingFSLayer{base}, nil
 	case *events.AlreadyExists:
-		return &LayerAlreadyExists{layerBase{event.LayerId()}}, nil
+		return &LayerAlreadyExists{base}, nil
 	case *events.LayerError:
-		return &LayerErrored{layerBase{event.LayerId()}, event.Error}, nil
+		return &LayerErrored{base, event.Error}, nil
 	}
 	return nil, fmt.Errorf("invalid initial event (%T)", event)
 }
@@ -46,7 +48,11 @@ func (l *LayerPullingFSLayer) Next(event events.LayerEvent) (Layer, error) {
 	case *events.Downloading:
 		return &LayerDownloading{l.layerBase, event.Progress()}, nil
 	case *events.DownloadComplete:
-		return &LayerDownloadComplete{l.layerBase}, nil
+		if l.isPodman {
+			return &LayerPullComplete{l.layerBase}, nil
+		} else {
+			return &LayerDownloadComplete{l.layerBase}, nil
+		}
 	case *events.AlreadyExists:
 		return &LayerAlreadyExists{l.layerBase}, nil
 	case *events.LayerError:
@@ -70,9 +76,13 @@ func (l *LayerWaiting) Next(event events.LayerEvent) (Layer, error) {
 	case *events.Downloading:
 		return &LayerDownloading{l.layerBase, event.Progress()}, nil
 	case *events.DownloadComplete:
-		return &LayerDownloadComplete{l.layerBase}, nil
+		if l.isPodman {
+			return &LayerPullComplete{l.layerBase}, nil
+		} else {
+			return &LayerDownloadComplete{l.layerBase}, nil
+		}
 	case *events.LayerError:
-		return &LayerErrored{layerBase{event.LayerId()}, event.Error}, nil
+		return &LayerErrored{l.layerBase, event.Error}, nil
 	}
 	return nil, fmt.Errorf("invalid transition (waiting + %T)", event)
 }
@@ -95,13 +105,17 @@ func (l *LayerDownloading) Next(event events.LayerEvent) (Layer, error) {
 	case *events.Downloading:
 		return &LayerDownloading{l.layerBase, event.Progress()}, nil
 	case *events.DownloadComplete:
-		return &LayerDownloadComplete{l.layerBase}, nil
+		if l.isPodman {
+			return &LayerPullComplete{l.layerBase}, nil
+		} else {
+			return &LayerDownloadComplete{l.layerBase}, nil
+		}
 	case *events.VerifyingChecksum:
 		return &LayerVerifyingChecksum{l.layerBase}, nil
 	case *events.Extracting:
 		return parseLayerExtracting(l.layerBase, event), nil
 	case *events.LayerError:
-		return &LayerErrored{layerBase{event.LayerId()}, event.Error}, nil
+		return &LayerErrored{l.layerBase, event.Error}, nil
 	}
 	return nil, fmt.Errorf("invalid transition (downloading + %T)", event)
 }
@@ -121,7 +135,7 @@ func (l *LayerVerifyingChecksum) Next(event events.LayerEvent) (Layer, error) {
 	case *events.Extracting:
 		return parseLayerExtracting(l.layerBase, event), nil
 	case *events.LayerError:
-		return &LayerErrored{layerBase{event.LayerId()}, event.Error}, nil
+		return &LayerErrored{l.layerBase, event.Error}, nil
 	}
 	return nil, fmt.Errorf("invalid transition (verifying-checksum + %T)", event)
 }
@@ -139,11 +153,15 @@ func (l *LayerDownloadComplete) Next(event events.LayerEvent) (Layer, error) {
 	case *events.Extracting:
 		return parseLayerExtracting(l.layerBase, event), nil
 	case *events.LayerError:
-		return &LayerErrored{layerBase{event.LayerId()}, event.Error}, nil
+		return &LayerErrored{l.layerBase, event.Error}, nil
 	case *events.PullComplete:
 		return &LayerPullComplete{l.layerBase}, nil
 	case *events.DownloadComplete:
-		return &LayerPullComplete{l.layerBase}, nil
+		if l.isPodman {
+			return &LayerPullComplete{l.layerBase}, nil
+		} else {
+			return &LayerDownloadComplete{l.layerBase}, nil
+		}
 	}
 	return nil, fmt.Errorf("invalid transition (download-complete + %T)", event)
 }
@@ -180,7 +198,7 @@ func (l *LayerExtracting) Next(event events.LayerEvent) (Layer, error) {
 	case *events.PullComplete:
 		return &LayerPullComplete{l.layerBase}, nil
 	case *events.LayerError:
-		return &LayerErrored{layerBase{event.LayerId()}, event.Error}, nil
+		return &LayerErrored{l.layerBase, event.Error}, nil
 	}
 	return nil, fmt.Errorf("invalid transition (extracting + %T)", event)
 }
@@ -210,7 +228,7 @@ func (l *LayerAlreadyExists) Next(event events.LayerEvent) (Layer, error) {
 	case *events.Extracting:
 		return parseLayerExtracting(l.layerBase, event), nil
 	case *events.LayerError:
-		return &LayerErrored{layerBase{event.LayerId()}, event.Error}, nil
+		return &LayerErrored{l.layerBase, event.Error}, nil
 	case *events.PullComplete:
 		return &LayerPullComplete{l.layerBase}, nil
 	case *events.AlreadyExists:
@@ -228,5 +246,11 @@ func (l *LayerPullComplete) Status() string {
 }
 
 func (l *LayerPullComplete) Next(event events.LayerEvent) (Layer, error) {
+	switch event.(type) {
+	case *events.DownloadComplete:
+		if l.isPodman {
+			return &LayerPullComplete{l.layerBase}, nil
+		}
+	}
 	return nil, fmt.Errorf("already completed, tried %T on layer-pull-complete", event)
 }
