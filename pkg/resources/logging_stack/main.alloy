@@ -1,0 +1,86 @@
+declare "main" {
+    discovery.docker "main" {
+        host = "unix:///var/run/docker.sock"
+        refresh_interval = "5s"
+        filter {
+            name = "label"
+            values = [{{ .labels }}]
+        }
+    }
+
+    discovery.relabel "main" {
+        targets = discovery.docker.main.targets
+
+        {{ if .is_podman }}
+        rule {
+            source_labels = ["__meta_docker_container_id"]
+            target_label = "__path__"
+            action = "replace"
+            replacement = "/var/lib/containers/storage/overlay-containers/$1/userdata/ctr.log"
+        }
+        {{ end }}
+
+        rule {
+            source_labels = ["__meta_docker_container_name"]
+            target_label = "container_name"
+            regex = "^/(.*)$"
+            action = "replace"
+            replacement = "$1"
+        }
+        rule {
+            source_labels = ["__meta_docker_container_id"]
+            target_label = "container_id"
+            action = "replace"
+        }
+        rule {
+            regex = "^__meta_docker_container_label_(.+)$"
+            action = "labelmap"
+            replacement = "$1"
+        }
+    }
+
+    {{ if .is_podman }}
+    loki.source.file "podman" {
+        targets = discovery.relabel.main.output
+        forward_to = [loki.process.podman.receiver]
+    }
+
+    loki.process "podman" {
+        stage.regex {
+            expression = "^(?s)(?P<time>\\S+?) (?P<stream>stdout|stderr) (?P<flags>\\S+?) (?P<content>.*)$"
+        }
+
+        stage.labels {
+            values = {
+                stream = "",
+                message_flags = "flags",
+            }
+        }
+
+        stage.timestamp {
+            source = "time"
+            format = "RFC3339Nano"
+        }
+
+        stage.output {
+            source = "content"
+        }
+
+        forward_to = [loki.write.default.receiver]
+    }
+    {{ else }}
+    loki.source.docker "docker" {
+        host = "unix:///var/run/docker.sock"
+
+        targets = discovery.relabel.main.output
+        forward_to = [loki.write.default.receiver]
+    }
+    {{ end }}
+
+    loki.write "default" {
+        endpoint {
+            url = "http://loki:3100/loki/api/v1/push"
+            batch_wait = "500ms"
+        }
+    }
+}

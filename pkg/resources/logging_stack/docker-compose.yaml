@@ -1,0 +1,58 @@
+name: logging-stack
+
+services:
+  loki:
+    image: grafana/loki:latest
+    user: "root"
+    ports:
+      - "3100:3100"
+    volumes:
+      - "loki-data:/var/lib/loki"
+      - "loki-config:/config:ro"
+    command:
+      - "-config.file=/config/config.yaml"
+  alloy:
+    image: grafana/alloy:latest
+    userns_mode: "keep-id:uid=473,gid=473"
+    user: "473:473"
+    depends_on:
+      - loki
+    privileged: true
+    ports:
+      - "12345:12345"
+    security_opt:
+      - "label=disable"
+    volumes:
+      - "alloy-data:/var/lib/alloy"
+      - "alloy-config:/config:ro"
+    entrypoint:
+      - "/bin/sh"
+      - "-c"
+      - "alloy run --server.http.listen-addr=0.0.0.0:12345 --storage.path=/var/lib/alloy /config/config.alloy"
+  grafana:
+    image: grafana/grafana:latest
+    ports:
+      - "3000:3000"
+    depends_on:
+      - loki
+    volumes:
+      - "grafana-data:/var/lib/grafana"
+      - "grafana-config:/etc/grafana/provisioning:ro"
+    environment:
+      - GF_AUTH_ANONYMOUS_ENABLED=true
+      - GF_AUTH_ANONYMOUS_ORG_ROLE=Admin
+      - GF_AUTH_ANONYMOUS_ORG_NAME=Main Org.
+      - GF_AUTH_DISABLE_LOGIN_FORM=true
+      - GF_AUTH_DISABLE_SIGNOUT_MENU=true
+
+volumes:
+  loki-data:
+  alloy-data:
+  grafana-data:
+
+  loki-config:
+    external: true
+  alloy-config:
+    external: true
+  grafana-config:
+    external: true
