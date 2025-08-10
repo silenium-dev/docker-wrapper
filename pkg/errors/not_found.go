@@ -2,14 +2,16 @@ package errors
 
 import (
 	"fmt"
-	"github.com/containerd/errdefs"
 	"strings"
+
+	"github.com/containerd/errdefs"
 )
 
 type ResourceType string
 
 const (
 	ResourceTypeContainer = "container"
+	ResourceTypeVolume    = "volume"
 	ResourceTypeImage     = "image"
 )
 

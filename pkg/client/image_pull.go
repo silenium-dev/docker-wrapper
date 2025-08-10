@@ -38,7 +38,7 @@ func (c *Client) ImagePullWithEvents(ctx context.Context, ref reference.Named, o
 		return v1.Hash{}, nil, nil, err
 	}
 
-	reader, err := c.Client.ImagePull(ctx, ref.String(), options)
+	reader, err := c.APIClient.ImagePull(ctx, ref.String(), options)
 	if err != nil {
 		return v1.Hash{}, nil, nil, err
 	}

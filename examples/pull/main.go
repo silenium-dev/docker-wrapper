@@ -9,19 +9,19 @@ import (
 	"github.com/docker/docker/api/types/registry"
 	client2 "github.com/docker/docker/client"
 	"github.com/silenium-dev/docker-wrapper/pkg/client"
-	"github.com/silenium-dev/docker-wrapper/pkg/client/auth"
+	"github.com/silenium-dev/docker-wrapper/pkg/client/provider"
 	"go.uber.org/zap"
 )
 
 func main() {
 	logger := zap.Must(zap.NewDevelopment()).Sugar()
-	authProvider, err := auth.NewDefaultAuthProvider()
+	authProvider, err := provider.NewDefaultAuthProvider()
 	if err != nil {
 		panic(err)
 	}
-	override := auth.NewOverridingAuthProvider(
+	override := provider.NewOverridingAuthProvider(
 		authProvider, map[string]registry.AuthConfig{},
-		auth.WithSugaredLogger(logger.With(zap.String("component", "auth-provider"))),
+		provider.WithSugaredLogger(logger.With(zap.String("component", "auth-provider"))),
 	).WithOverride("quay.io", registry.AuthConfig{})
 	cli, err := client.NewWithOpts(
 		client.WithAuthProvider(override),

@@ -98,7 +98,9 @@ var connectionFactories = map[string]func(_url *url.URL, uri string, identity st
 // For example tcp://localhost:<port>
 // or unix:///run/podman/podman.sock
 // or ssh://<user>@<host>[:port]/run/podman/podman.sock
-func NewConnectionWithIdentity(ctx context.Context, uri string, identity string, machine bool) (context.Context, error) {
+func NewConnectionWithIdentity(ctx context.Context, uri string, identity string, machine bool) (
+	context.Context, error,
+) {
 	var err error
 	if v, found := os.LookupEnv("CONTAINER_HOST"); found && uri == "" {
 		uri = v
@@ -228,13 +230,15 @@ func sshClient(_url *url.URL, uri string, identity string, machine bool) (Connec
 			logrus.Debugf("  IdentityFile: %q", identity)
 		}
 	}
-	conn, err := ssh.Dial(&ssh.ConnectionDialOptions{
-		Host:                        uri,
-		Identity:                    identity,
-		User:                        userinfo,
-		Port:                        port,
-		InsecureIsMachineConnection: machine,
-	}, ssh.GolangMode)
+	conn, err := ssh.Dial(
+		&ssh.ConnectionDialOptions{
+			Host:                        uri,
+			Identity:                    identity,
+			User:                        userinfo,
+			Port:                        port,
+			InsecureIsMachineConnection: machine,
+		}, ssh.GolangMode,
+	)
 	if err != nil {
 		return connection, newConnectError(err)
 	}
@@ -248,7 +252,8 @@ func sshClient(_url *url.URL, uri string, identity string, machine bool) (Connec
 		var b bytes.Buffer
 		session.Stdout = &b
 		if err := session.Run(
-			"podman info --format '{{.Host.RemoteSocket.Path}}'"); err != nil {
+			"podman info --format '{{.Host.RemoteSocket.Path}}'",
+		); err != nil {
 			return connection, err
 		}
 		val := strings.TrimSuffix(b.String(), "\n")
@@ -339,8 +344,10 @@ func pingNewConnection(ctx context.Context) (*semver.Version, error) {
 			// Server's job when Client version is equal or older
 			return &versionSrv, nil
 		case 1:
-			return nil, fmt.Errorf("server API version is too old. Client %q server %q",
-				version.APIVersion[version.Libpod][version.MinimalAPI].String(), versionSrv.String())
+			return nil, fmt.Errorf(
+				"server API version is too old. Client %q server %q",
+				version.APIVersion[version.Libpod][version.MinimalAPI].String(), versionSrv.String(),
+			)
 		}
 	}
 	return nil, fmt.Errorf("ping response was %d", response.StatusCode)
@@ -366,7 +373,10 @@ func unixClient(_url *url.URL, uri string, _ string, _ bool) (Connection, error)
 
 // DoRequest assembles the http request and returns the response.
 // The caller must close the response body.
-func (c *Connection) DoRequest(ctx context.Context, httpBody io.Reader, httpMethod, endpoint string, queryParams url.Values, headers http.Header, pathValues ...string) (*APIResponse, error) {
+func (c *Connection) DoRequest(
+	ctx context.Context, httpBody io.Reader, httpMethod, endpoint string, queryParams url.Values, headers http.Header,
+	pathValues ...string,
+) (*APIResponse, error) {
 	var (
 		err      error
 		response *http.Response

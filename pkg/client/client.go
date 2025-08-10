@@ -10,7 +10,7 @@ import (
 )
 
 type Client struct {
-	*client.Client
+	client.APIClient
 	dockerOpts             []client.Opt
 	authProvider           provider.AuthProvider
 	imageProvider          provider.ImageProvider
@@ -34,11 +34,12 @@ func NewWithOpts(opts ...Opt) (*Client, error) {
 	if c.imageProvider == nil {
 		c.imageProvider = provider.DefaultImageProvider()
 	}
-
-	cli, err := client.NewClientWithOpts(c.dockerOpts...)
-	if err != nil {
-		return nil, err
+	if c.APIClient == nil {
+		cli, err := client.NewClientWithOpts(c.dockerOpts...)
+		if err != nil {
+			return nil, err
+		}
+		c.APIClient = cli
 	}
-	c.Client = cli
 	return c, nil
 }

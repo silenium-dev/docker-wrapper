@@ -5,14 +5,14 @@ import (
 	"fmt"
 
 	"github.com/blang/semver/v4"
-	"github.com/silenium-dev/docker-wrapper/pkg/client"
+	"github.com/silenium-dev/docker-wrapper/pkg/api"
 	"github.com/silenium-dev/docker-wrapper/pkg/client/podman/containers/bindings"
 	"go.uber.org/zap"
 )
 
 var ErrNotPodman = fmt.Errorf("not a podman server")
 
-func getPodmanConnection(cli *client.Client, ctx context.Context, logger *zap.SugaredLogger) (
+func getPodmanConnection(cli api.ClientWrapper, ctx context.Context, logger *zap.SugaredLogger) (
 	*bindings.Connection, *semver.Version, error,
 ) {
 	if ok, err := cli.SystemIsPodman(ctx); err != nil {
