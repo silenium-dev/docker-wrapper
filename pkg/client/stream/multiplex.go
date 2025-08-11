@@ -39,16 +39,19 @@ func (s Type) IsValid() bool {
 	return s.Name() != "unknown"
 }
 
+type Message struct {
+	StreamType Type
+	Content    []byte
+}
+
 type MultiplexedStream struct {
-	io.Closer
+	closer io.Closer
 	reader io.Reader
 	writer io.Writer
 
 	logger *zap.SugaredLogger
 
-	stdOut      chan []byte
-	stdErr      chan []byte
-	systemError chan []byte
+	messageChan chan Message
 	done        chan struct{}
 }
 
@@ -61,12 +64,10 @@ func NewMultiplexedStream(
 	logger *zap.SugaredLogger,
 ) *MultiplexedStream {
 	m := &MultiplexedStream{
-		Closer:      closer,
+		closer:      closer,
 		reader:      reader,
 		writer:      writer,
-		stdOut:      make(chan []byte, 100),
-		stdErr:      make(chan []byte, 100),
-		systemError: make(chan []byte, 100),
+		messageChan: make(chan Message, 100),
 		done:        make(chan struct{}),
 		logger:      logger,
 	}
@@ -80,16 +81,8 @@ func NewMultiplexedStream(
 	return m
 }
 
-func (m *MultiplexedStream) Stdout() <-chan []byte {
-	return m.stdOut
-}
-
-func (m *MultiplexedStream) Stderr() <-chan []byte {
-	return m.stdErr
-}
-
-func (m *MultiplexedStream) SystemError() <-chan []byte {
-	return m.systemError
+func (m *MultiplexedStream) Messages() chan Message {
+	return m.messageChan
 }
 
 func (m *MultiplexedStream) Done() <-chan struct{} {
@@ -103,11 +96,22 @@ func (m *MultiplexedStream) Write(data []byte) (int, error) {
 	return m.writer.Write(data)
 }
 
+func (m *MultiplexedStream) Close() error {
+	if m.closer == nil {
+		return nil
+	}
+	err := m.closer.Close()
+	if err != nil {
+		m.logger.Errorf("failed to close multiplexed stream: %v", err)
+		return err
+	}
+	m.logger.Debugf("multiplexed stream closed")
+	return nil
+}
+
 func (m *MultiplexedStream) handleSimplexOutput(ctx context.Context) {
 	defer close(m.done)
-	defer close(m.stdOut)
-	defer close(m.stdErr)
-	defer close(m.systemError)
+	defer close(m.messageChan)
 	go func() {
 		<-ctx.Done()
 		_ = m.Close()
@@ -116,7 +120,10 @@ func (m *MultiplexedStream) handleSimplexOutput(ctx context.Context) {
 	scanner := bufio.NewScanner(m.reader)
 	for ctx.Err() == nil && scanner.Scan() {
 		line := scanner.Bytes()
-		m.stdOut <- line
+		m.messageChan <- Message{
+			Content:    line,
+			StreamType: TypeStdout,
+		}
 	}
 	err := scanner.Err()
 	if err != nil {
@@ -126,9 +133,7 @@ func (m *MultiplexedStream) handleSimplexOutput(ctx context.Context) {
 
 func (m *MultiplexedStream) handleMultiplexOutput(ctx context.Context) {
 	defer close(m.done)
-	defer close(m.stdOut)
-	defer close(m.stdErr)
-	defer close(m.systemError)
+	defer close(m.messageChan)
 	go func() {
 		<-ctx.Done()
 		_ = m.Close()
@@ -165,15 +170,9 @@ func (m *MultiplexedStream) handleMultiplexOutput(ctx context.Context) {
 			return
 		}
 
-		switch streamType {
-		case TypeStdout:
-			m.stdOut <- data
-		case TypeStderr:
-			m.stdErr <- data
-		case TypeSystemError:
-			m.systemError <- data
-		default:
-			m.logger.Warnf("unexpected stream type: %s", streamType.Name())
+		m.messageChan <- Message{
+			StreamType: streamType,
+			Content:    data,
 		}
 	}
 	m.logger.Debugf("multiplexed output handling completed, closing channels")

@@ -8,6 +8,7 @@ import (
 
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/network"
+	"github.com/silenium-dev/docker-wrapper/pkg/client/stream"
 	"k8s.io/apimachinery/pkg/util/rand"
 )
 
@@ -70,11 +71,14 @@ func (c *Client) SystemHostIPFromContainers(ctx context.Context, netId *string) 
 		if err != nil {
 			return nil, err
 		}
-		ipAddrByteStr, ok := <-multiplex.Stdout()
+		ipAddrByteMsg, ok := <-multiplex.Messages()
 		if !ok {
 			return nil, fmt.Errorf("no output from container %s", cont.ID)
 		}
-		ipAddrStr = strings.TrimSpace(string(ipAddrByteStr))
+		if ipAddrByteMsg.StreamType != stream.TypeStdout {
+			return nil, fmt.Errorf("unexpected stream type %s from container %s", ipAddrByteMsg.StreamType.Name(), cont.ID)
+		}
+		ipAddrStr = strings.TrimSpace(string(ipAddrByteMsg.Content))
 	} else if netId == nil {
 		ipAddrStr = inspect.NetworkSettings.Gateway
 	} else {
