@@ -9,7 +9,6 @@ import (
 	"github.com/distribution/reference"
 	"github.com/docker/docker/api/types/build"
 	"github.com/docker/docker/api/types/image"
-	"github.com/docker/docker/client"
 	v1 "github.com/google/go-containerregistry/pkg/v1"
 	"github.com/opencontainers/go-digest"
 	"github.com/silenium-dev/docker-wrapper/pkg/client/provider"
@@ -51,7 +50,7 @@ type SystemClient interface {
 }
 
 type ClientWrapper interface {
-	client.APIClient
+	DockerClient
 	ClientBase
 	ImageClient
 	ContainerClient

@@ -22,7 +22,7 @@ func (c *Client) SystemIsPodman(ctx context.Context) (bool, error) {
 }
 
 func (c *Client) SystemDefaultPlatform(ctx context.Context) (*v1.Platform, error) {
-	info, err := c.APIClient.Info(ctx)
+	info, err := c.Info(ctx)
 	if err != nil {
 		return nil, err
 	}

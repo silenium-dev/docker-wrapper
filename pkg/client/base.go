@@ -6,7 +6,7 @@ import (
 )
 
 func (c *Client) Close() error {
-	return c.APIClient.Close()
+	return c.DockerClient.Close()
 }
 
 func (c *Client) AuthProvider() provider.AuthProvider {

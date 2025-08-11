@@ -15,5 +15,5 @@ func (c *Client) ImageBuild(
 	maps.Copy(authConfigs, opts.AuthConfigs)
 	opts.AuthConfigs = authConfigs
 
-	return c.APIClient.ImageBuild(ctx, buildContext, opts)
+	return c.DockerClient.ImageBuild(ctx, buildContext, opts)
 }
