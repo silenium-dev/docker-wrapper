@@ -1,16 +1,21 @@
 package client
 
 import (
+	"log/slog"
 	"net"
 	"sync"
+	"unsafe"
 
 	"github.com/docker/docker/client"
+	client2 "github.com/docker/go-sdk/client"
 	"github.com/silenium-dev/docker-wrapper/pkg/client/provider"
 	"go.uber.org/zap"
+	"go.uber.org/zap/exp/zapslog"
 )
 
 type Client struct {
 	client.APIClient
+	sdkClient              *client2.Client
 	dockerOpts             []client.Opt
 	authProvider           provider.AuthProvider
 	imageProvider          provider.ImageProvider
@@ -34,12 +39,23 @@ func NewWithOpts(opts ...Opt) (*Client, error) {
 	if c.imageProvider == nil {
 		c.imageProvider = provider.DefaultImageProvider()
 	}
-	if c.APIClient == nil {
-		cli, err := client.NewClientWithOpts(c.dockerOpts...)
-		if err != nil {
-			return nil, err
-		}
-		c.APIClient = cli
+	cli, err := client.NewClientWithOpts(c.dockerOpts...)
+	if err != nil {
+		return nil, err
 	}
+	c.APIClient = cli
+
+	result := &client2.Client{}
+	internal := (*sdkClient)(unsafe.Pointer(result))
+	internal.dockerClient = cli
+	internal.once.Do(func() {})
+	internal.log = slog.New(zapslog.NewHandler(
+		c.logger.Desugar().Core(),
+		zapslog.WithCaller(true),
+		zapslog.WithName("docker-sdk"),
+		zapslog.AddStacktraceAt(slog.LevelError),
+	))
+	c.sdkClient = result
+
 	return c, nil
 }

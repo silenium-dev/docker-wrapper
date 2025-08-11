@@ -19,7 +19,7 @@ func main() {
 	}
 	println("Is Podman:", isPodman)
 	if isPodman {
-		podmanCli, err := client2.FromDocker(context.Background(), cli, nil, nil)
+		podmanCli, err := client2.FromDocker(context.Background(), cli)
 		if err != nil {
 			panic(err)
 		}

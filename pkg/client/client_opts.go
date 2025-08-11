@@ -11,13 +11,6 @@ import (
 
 type Opt func(*Client) error
 
-func WithAPIClient(apiClient client.APIClient) Opt {
-	return func(c *Client) error {
-		c.APIClient = apiClient
-		return nil
-	}
-}
-
 func WithVersionNegotiation(c *Client) error {
 	c.dockerOpts = append(c.dockerOpts, client.WithAPIVersionNegotiation())
 	return nil
