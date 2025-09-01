@@ -6,7 +6,9 @@ import (
 	"net"
 	"strings"
 
+	"github.com/distribution/reference"
 	"github.com/docker/docker/api/types/container"
+	"github.com/docker/docker/api/types/image"
 	"github.com/docker/docker/api/types/network"
 	"github.com/silenium-dev/docker-wrapper/pkg/client/stream"
 	"k8s.io/apimachinery/pkg/util/rand"
@@ -30,6 +32,15 @@ func (c *Client) SystemHostIPFromContainers(ctx context.Context, netId *string) 
 		return nil, fmt.Errorf("failed to check if Podman: %w", err)
 	}
 
+	imgRef, err := reference.ParseDockerRef(c.imageProvider.GetDnsUtilImage())
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse image reference %s: %w", c.imageProvider.GetDnsUtilImage(), err)
+	}
+	dig, err := c.ImagePullSimple(ctx, imgRef, image.PullOptions{})
+	if err != nil {
+		return nil, fmt.Errorf("failed to pull image %s: %w", imgRef.String(), err)
+	}
+
 	endpoints := map[string]*network.EndpointSettings{}
 	if netId != nil {
 		endpoints[*netId] = &network.EndpointSettings{}
@@ -43,7 +54,7 @@ func (c *Client) SystemHostIPFromContainers(ctx context.Context, netId *string) 
 	cont, err := c.ContainerCreate(
 		ctx,
 		&container.Config{
-			Image:      c.imageProvider.GetDnsUtilImage(),
+			Image:      dig.String(),
 			Entrypoint: command,
 		},
 		&container.HostConfig{},
