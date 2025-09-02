@@ -31,9 +31,14 @@ func (c *Client) ImageGetManifest(ctx context.Context, ref reference.Named, plat
 		return v1.Hash{}, nil, err
 	}
 
-	img, err := remote.Image(nameRef, opts...)
+	desc, err := remote.Get(nameRef, opts...)
 	if err != nil {
-		return v1.Hash{}, nil, fmt.Errorf("failed to get image manifest: %w", err)
+		return v1.Hash{}, nil, fmt.Errorf("failed to get descriptor: %w", err)
+	}
+
+	img, err := desc.Image()
+	if err != nil {
+		return v1.Hash{}, nil, fmt.Errorf("failed to get image: %w", err)
 	}
 	isPodman, err := c.SystemIsPodman(ctx)
 	if err != nil {
@@ -43,11 +48,14 @@ func (c *Client) ImageGetManifest(ctx context.Context, ref reference.Named, plat
 	if err != nil {
 		return v1.Hash{}, nil, err
 	}
+
 	var id v1.Hash
 	if isPodman {
-		id, err = img.Digest()
-	} else {
+		// Podman uses config digest as image-id
 		id, err = img.ConfigName()
+	} else {
+		// Docker uses manifest/index digest as image-id
+		id = desc.Digest
 	}
 	if err != nil {
 		return v1.Hash{}, nil, err
