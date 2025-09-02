@@ -35,11 +35,20 @@ func (c *Client) ImageGetManifest(ctx context.Context, ref reference.Named, plat
 	if err != nil {
 		return v1.Hash{}, nil, fmt.Errorf("failed to get image manifest: %w", err)
 	}
+	isPodman, err := c.SystemIsPodman(ctx)
+	if err != nil {
+		return v1.Hash{}, nil, fmt.Errorf("failed to determine if runtime is podman: %w", err)
+	}
 	manifest, err := img.Manifest()
 	if err != nil {
 		return v1.Hash{}, nil, err
 	}
-	id, err := img.ConfigName()
+	var id v1.Hash
+	if isPodman {
+		id, err = img.ConfigName()
+	} else {
+		id, err = img.Digest()
+	}
 	if err != nil {
 		return v1.Hash{}, nil, err
 	}
