@@ -45,9 +45,9 @@ func (c *Client) ImageGetManifest(ctx context.Context, ref reference.Named, plat
 	}
 	var id v1.Hash
 	if isPodman {
-		id, err = img.ConfigName()
-	} else {
 		id, err = img.Digest()
+	} else {
+		id, err = img.ConfigName()
 	}
 	if err != nil {
 		return v1.Hash{}, nil, err
