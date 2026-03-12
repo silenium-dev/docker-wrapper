@@ -16,6 +16,8 @@ func NewLayer(isPodman bool, event events.LayerEvent) (Layer, error) {
 		return &LayerAlreadyExists{base}, nil
 	case *events.LayerError:
 		return &LayerErrored{base, event.Error}, nil
+	case *events.DownloadComplete:
+		return &LayerDownloadComplete{base}, nil
 	}
 	return nil, fmt.Errorf("invalid initial event (%T)", event)
 }
