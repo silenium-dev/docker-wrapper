@@ -48,7 +48,7 @@ func (c *Client) SystemHostIPFromContainers(ctx context.Context, netId *string) 
 
 	command := []string{"sh", "-c", "sleep infinity"}
 	if isPodman {
-		command = []string{"dig", "+short", "A", "host.containers.internal"}
+		command = []string{"getent", "hosts", "host.docker.internal"}
 	}
 
 	cont, err := c.ContainerCreate(
@@ -89,7 +89,7 @@ func (c *Client) SystemHostIPFromContainers(ctx context.Context, netId *string) 
 		if ipAddrByteMsg.StreamType != stream.TypeStdout {
 			return nil, fmt.Errorf("unexpected stream type %s from container %s", ipAddrByteMsg.StreamType.Name(), cont.ID)
 		}
-		ipAddrStr = strings.TrimSpace(string(ipAddrByteMsg.Content))
+		ipAddrStr = strings.TrimSpace(strings.Split(string(ipAddrByteMsg.Content), " ")[0])
 	} else if netId == nil {
 		ipAddrStr = inspect.NetworkSettings.Gateway
 	} else {
