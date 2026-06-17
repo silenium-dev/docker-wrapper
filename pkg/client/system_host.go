@@ -48,7 +48,7 @@ func (c *Client) SystemHostIPFromContainers(ctx context.Context, netId *string) 
 
 	command := []string{"sh", "-c", "sleep infinity"}
 	if isPodman {
-		command = []string{"dig", "+short", "A", "host.docker.internal"}
+		command = []string{"dig", "+short", "A", "host.containers.internal"}
 	}
 
 	cont, err := c.ContainerCreate(
